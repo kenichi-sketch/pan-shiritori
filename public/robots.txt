@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://shiritori.ak-base.com/sitemap.xml
