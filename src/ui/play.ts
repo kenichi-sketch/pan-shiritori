@@ -26,10 +26,13 @@ const recentKeys = new Set<string>();
 
 export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   const { dict, profile } = opt;
-  const star = opt.level === 5 ? level5Star(profile) : 1;
-  const cfg = levelConfig(opt.level, star);
-  const showFurigana = cfg.furigana && profile.settings.furigana;
-  const totalCount = opt.mode === 'score' ? (opt.count ?? 5) : 1;
+  const star = level5Star(profile);
+  /** スコアモードはレベル1→5を1問ずつ。それ以外は選んだレベル */
+  const SCORE_LEVELS = [1, 2, 3, 4, 5];
+  const totalCount = opt.mode === 'score' ? SCORE_LEVELS.length : 1;
+  let currentLevel = opt.mode === 'score' ? SCORE_LEVELS[0] : opt.level;
+  let cfg = levelConfig(currentLevel, currentLevel === 5 ? star : 1);
+  let showFurigana = cfg.furigana && profile.settings.furigana;
 
   let puzzle!: Puzzle;
   let placed: string[] = [];
@@ -48,6 +51,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   const chainEl = h('div', { class: 'chain' });
   const trayEl = h('div', { class: 'tray' });
   const progressBadge = h('span', { class: 'badge' });
+  const levelBadge = h('span', { class: 'badge' });
   const timerBadge = h('span', { class: 'badge', style: { display: opt.mode === 'score' ? '' : 'none' } });
   const hintBtn = h('button', { class: 'btn yellow small', onClick: () => doHint() }, '💡 ヒント');
   const undoBtn = h('button', { class: 'btn ghost small', onClick: () => undo() }, '↩ もどす');
@@ -56,8 +60,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     h('div', { class: 'play-head' },
       h('button', { class: 'icon-btn', onClick: () => exit(), 'aria-label': 'もどる' }, '←'),
       h('span', { class: 'badge' }, CATEGORY_LABEL[opt.cat]),
-      h('span', { class: 'badge' }, `レベル${opt.level}${opt.level === 5 ? ' ' + '★'.repeat(star) : ''}`),
-      progressBadge, timerBadge,
+      levelBadge, progressBadge, timerBadge,
       h('span', { class: 'grow' }),
       opt.mode === 'daily' ? h('span', { class: 'badge' }, '☀ きょうの1もん') : null,
     ),
@@ -72,6 +75,10 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   function say(text: string): void { bubble.textContent = text; }
 
   function newPuzzle(): void {
+    if (opt.mode === 'score') currentLevel = SCORE_LEVELS[Math.min(solvedCount, SCORE_LEVELS.length - 1)];
+    cfg = levelConfig(currentLevel, currentLevel === 5 ? star : 1);
+    showFurigana = cfg.furigana && profile.settings.furigana;
+    levelBadge.textContent = `レベル${currentLevel}${currentLevel === 5 ? ' ' + '★'.repeat(star) : ''}`;
     const seed = opt.mode === 'daily' ? hashString(`${todayStr()}|${opt.cat}|${opt.level}|${profile.birth}`) : randomSeed();
     puzzle = generatePuzzle(dict, opt.cat, cfg, seed, recentKeys);
     recentKeys.add(puzzle.answer.join(''));
@@ -81,7 +88,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     puzzleStart = performance.now();
     renderTray();
     renderChain();
-    progressBadge.textContent = opt.mode === 'score' ? `${solvedCount + 1} / ${totalCount}もん` : `${puzzle.cfg.n}まい`;
+    progressBadge.textContent = opt.mode === 'score' ? `${solvedCount + 1} / ${totalCount}もんめ` : `${puzzle.cfg.n}まい`;
     const n = puzzle.cfg.n;
     if (puzzle.first) say(`「${puzzle.first}」から はじめて、${n}まい つなげよう！`);
     else say(`すきな 1まいから はじめて、${n}まい つなげよう！`);
@@ -216,7 +223,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     sfx.clear();
     character.mood('dance', 0);
     say('できた！すごい！');
-    const result = recordClear(profile, opt.cat, opt.level, words.map((w) => w.w), usedHint);
+    const result = recordClear(profile, opt.cat, currentLevel, words.map((w) => w.w), usedHint);
     if (opt.mode === 'daily') { profile.progress.dailyDone = todayStr(); saveProfile(profile); }
     solvedCount++;
     let ps: ReturnType<typeof puzzleScore> | null = null;
@@ -293,13 +300,13 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     stopTimer();
     const entry = {
       profileId: profile.id, name: profile.name, bread: profile.bread,
-      cat: opt.cat, level: opt.level, count: totalCount,
+      cat: opt.cat, level: 0, count: totalCount,
       score: scoreTotal, ms: elapsedBefore, hints: scoreHints, date: new Date().toISOString(),
     };
-    const prevBest = bestFor(profile.id, opt.cat, opt.level, totalCount);
+    const prevBest = bestFor(profile.id, opt.cat, 0, totalCount);
     const isBest = !prevBest || scoreTotal > prevBest.score;
     const rank = addRecord(entry);
-    const ranking = rankingFor(opt.cat, opt.level, totalCount).slice(0, 10);
+    const ranking = rankingFor(opt.cat, 0, totalCount).slice(0, 10);
     const modalChar = new Character(profile.bread, 150);
     modalChar.mood(isBest ? 'dance' : 'happy', 0);
     const table = h('table', { style: { width: '100%', background: '#fff', borderRadius: '14px', overflow: 'hidden' } },
@@ -318,7 +325,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
         h('div', null,
           h('div', { class: 'stat' }, '🏅 ', h('span', { class: 'num', style: { fontSize: '2rem' } }, String(scoreTotal)), ' てん'),
           h('div', { class: 'stat', style: { marginTop: '6px' } }, '⏱ ', fmtTime(elapsedBefore)),
-          h('div', { class: 'stat', style: { marginTop: '6px' } }, `${CATEGORY_LABEL[opt.cat]} レベル${opt.level} ${totalCount}もん`),
+          h('div', { class: 'stat', style: { marginTop: '6px' } }, `${CATEGORY_LABEL[opt.cat]} レベル1〜5 とおし`),
           prevBest && !isBest ? h('div', { class: 'sub', style: { marginTop: '6px' } }, `いまの さいこう: ${prevBest.score}てん`) : null,
           h('div', { class: 'sub', style: { marginTop: '6px' } }, `このたんまつで ${rank}い`),
         ),

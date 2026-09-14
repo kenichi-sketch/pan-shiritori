@@ -1,7 +1,7 @@
 import type { Dictionary } from '../data';
 import { BREADS, PANURANAI_URL, breadImage } from '../chars';
 import { CLEARS_TO_UNLOCK, L5_CLEARS_PER_STAR, availableCategories, categoryForGrade, gradeLabel, level5Star, maxUnlockedLevel, nextCategory, saveProfile, schoolGrade, todayStr } from '../profile';
-import { bestFor } from '../ranking';
+import { bestFor, fmtTime } from '../ranking';
 import { sfx } from '../audio';
 import type { Category, Profile } from '../types';
 import { CATEGORIES, CATEGORY_LABEL } from '../types';
@@ -84,10 +84,8 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
   }
   renderChips(); renderLevels();
 
-  const scoreBtn = (count: number) => h('button', { class: 'btn blue', onClick: () => { sfx.tap(); act.score(cat, maxLv, count); } },
-    `🏅 スコア ${count}もん`);
-
-  const best5 = bestFor(p.id, cat, maxLv, 5); const best10 = bestFor(p.id, cat, maxLv, 10);
+  const scoreBtn = h('button', { class: 'btn blue', onClick: () => { sfx.tap(); act.score(cat, 0, 5); } }, '🏅 スコアアタック（レベル1〜5 とおし）');
+  const best = bestFor(p.id, cat, 0, 5);
 
   // パン占いへ（生年月日を POST して結果ページを開く）
   const [by, bm, bd] = p.birth.split('-');
@@ -123,15 +121,13 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
     h('h3', { style: { margin: '14px 0 0' } }, 'レベルを えらぼう'),
     h('p', { class: 'sub', style: { margin: '0 0 4px' } }, `${CLEARS_TO_UNLOCK}かい クリアすると つぎの レベルが ひらくよ`),
     levelsEl,
+    h('p', { class: 'sub', style: { margin: '14px 0 4px' } }, 'スコアアタックは レベル1から5まで 1もんずつ、じかんを はかって とくてんを きそうよ'),
     h('div', { class: 'home-actions' },
       h('button', { class: `btn ${dailyDone ? 'ghost' : 'pink'}`, onClick: () => { sfx.tap(); act.daily(cat, maxLv); } }, dailyDone ? '☀ きょうの1もん ✓' : '☀ きょうの1もん'),
-      scoreBtn(5),
-      scoreBtn(10),
+      scoreBtn,
       h('button', { class: 'btn green', onClick: () => { sfx.tap(); act.zukan(); } }, '📖 ことばずかん'),
     ),
-    best5 || best10 ? h('p', { class: 'sub center', style: { margin: '6px 0 0' } },
-      `さいこうてん（${CATEGORY_LABEL[cat]} レベル${maxLv}）: `,
-      best5 ? `5もん ${best5.score}てん` : '', best5 && best10 ? ' ／ ' : '', best10 ? `10もん ${best10.score}てん` : '') : null,
+    best ? h('p', { class: 'sub center', style: { margin: '6px 0 0' } }, `スコアアタック さいこうてん（${CATEGORY_LABEL[cat]}）: ${best.score}てん ／ ${fmtTime(best.ms)}`) : null,
     h('div', { class: 'home-footer' },
       h('div', { class: 'row' }, uranaiForm),
       h('button', { class: 'small-link', onClick: () => { sfx.tap(); act.parent(); } }, 'おうちのひと メニュー'),
