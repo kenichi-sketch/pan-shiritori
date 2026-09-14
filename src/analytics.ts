@@ -13,7 +13,9 @@ export function initAnalytics(): void {
   if (!GA_ID || ready) return;
   ready = true;
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: unknown[]) { window.dataLayer.push(args); };
+  // gtag.js は dataLayer に入った「arguments オブジェクト」だけをコマンドとして扱う。
+  // 配列を push すると無視されるので、公式スニペットと同じく arguments を渡す。
+  window.gtag = function gtag() { window.dataLayer.push(arguments); };
   window.gtag('js', new Date());
   // SPA なので自動ページビューは止め、画面遷移ごとに手動で送る
   window.gtag('config', GA_ID, { send_page_view: false, anonymize_ip: true });
