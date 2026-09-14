@@ -112,15 +112,30 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     character.mood('wave', 1200);
   }
 
-  function tileEl(k: string): HTMLElement {
+  /** 想定解の熟語に沿った、タイルごとの読み（ダミーは音読み） */
+  let tileReading = new Map<string, string>();
+  function computeTileReadings(): void {
+    tileReading = new Map();
+    const a = puzzle.answer;
+    for (let i = 0; i < a.length; i++) {
+      const r = (i > 0 ? dict.readingIn(a[i - 1], a[i]) : null)
+        ?? (i + 1 < a.length ? dict.readingBefore(a[i], a[i + 1]) : null)
+        ?? dict.reading(a[i]);
+      tileReading.set(a[i], r);
+    }
+    for (const k of puzzle.tiles) if (!tileReading.has(k)) tileReading.set(k, dict.reading(k));
+  }
+
+  function tileEl(k: string, reading?: string): HTMLElement {
     return h('div', { class: 'tile' },
       h('span', { class: 'k' }, k),
-      h('span', { class: 'r' }, showFurigana ? dict.reading(k) : ''),
+      h('span', { class: 'r' }, showFurigana ? (reading ?? tileReading.get(k) ?? dict.reading(k)) : ''),
     );
   }
 
   function renderTray(): void {
     clear(trayEl);
+    computeTileReadings();
     tray = puzzle.tiles.map((k) => {
       const el = tileEl(k);
       el.addEventListener('click', () => onTrayTap(k));
@@ -145,7 +160,11 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
       const isFixed = i === 0 && !!puzzle.first;
       const slot = h('div', { class: `slot ${i < placed.length ? 'filled' : ''} ${isFixed ? 'fixed' : ''} ${i === placed.length ? 'next' : ''}` });
       if (i < placed.length) {
-        const t = tileEl(placed[i]); t.classList.add('in-slot', 'pop');
+        // 実際にできた熟語での読みを優先
+        const actual = (i > 0 ? dict.readingIn(placed[i - 1], placed[i]) : null)
+          ?? (i + 1 < placed.length ? dict.readingBefore(placed[i], placed[i + 1]) : null)
+          ?? undefined;
+        const t = tileEl(placed[i], actual); t.classList.add('in-slot', 'pop');
         if (!isFixed) t.addEventListener('click', () => removeFrom(i));
         slot.appendChild(t);
       }

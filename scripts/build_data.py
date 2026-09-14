@@ -43,19 +43,63 @@ MIN_K3 = set('死毒爆煙兵軍戦敵闘撃襲牲奴虜姫妃娠嫡')  # 含む
 MIN_K2_EXCEPT = {'挑戦', '作戦', '対戦', '観戦', '爆笑', '消毒', '禁煙', '兵士', '軍手', '素敵', '無敵', '敵', '闘志', '格闘'}  # 高学年なら可
 NUM = set('一二三四五六七八九十百千万')
 
-# 漢字: 学年 + 読み(訓, 音)
+# 漢字: 学年 + 読み(訓, 音)。分割用に全読みも保持
 kanji = {}
+all_readings = {}   # 漢字 → [(読み, 'on'|'kun'), ...]
 for ev, el in ET.iterparse(os.path.join(RAW, 'kanjidic2.xml'), events=('end',)):
     if el.tag == 'character':
         g = el.findtext('misc/grade')
         if g is not None and int(g) in (1,2,3,4,5,6,8):
             kun = on = ''
+            rs = []
             for r in el.iter('reading'):
                 t = r.get('r_type')
-                if t == 'ja_kun' and not kun: kun = r.text.split('.')[0].lstrip('-')
-                if t == 'ja_on' and not on: on = kata2hira(r.text)
-            kanji[el.findtext('literal')] = [int(g), kun, on]
+                if t == 'ja_kun':
+                    stem = r.text.split('.')[0].strip('-')
+                    if not kun: kun = stem
+                    rs.append((stem, 'kun'))
+                    # 送り仮名込みの形（例: 見.る → みる）も候補に
+                    full = r.text.replace('.', '').strip('-')
+                    if full != stem: rs.append((full, 'kun'))
+                if t == 'ja_on':
+                    h = kata2hira(r.text)
+                    if not on: on = h
+                    rs.append((h, 'on'))
+            lit = el.findtext('literal')
+            kanji[lit] = [int(g), kun, on]
+            all_readings[lit] = rs
         el.clear()
+
+# ---- 熟語の読みを2字に分割（連濁・促音・半濁音の変化を許す） ----
+DAKU = {'か':'が','き':'ぎ','く':'ぐ','け':'げ','こ':'ご','さ':'ざ','し':'じ','す':'ず','せ':'ぜ','そ':'ぞ',
+        'た':'だ','ち':'ぢ','つ':'づ','て':'で','と':'ど','は':'ば','ひ':'び','ふ':'ぶ','へ':'べ','ほ':'ぼ'}
+HANDAKU = {'は':'ぱ','ひ':'ぴ','ふ':'ぷ','へ':'ぺ','ほ':'ぽ'}
+def variants_first(r):
+    """語頭側（1字目）の変化: 末尾の つ/く/き/ち → っ"""
+    out = {r}
+    if len(r) >= 2 and r[-1] in 'つくきち': out.add(r[:-1] + 'っ')
+    return out
+def variants_second(r):
+    """語末側（2字目）の変化: 先頭の連濁・半濁音"""
+    out = {r}
+    if r and r[0] in DAKU: out.add(DAKU[r[0]] + r[1:])
+    if r and r[0] in HANDAKU: out.add(HANDAKU[r[0]] + r[1:])
+    return out
+def split_reading(w, r):
+    a, b = w[0], w[1]
+    cands = []
+    for ra, ta in all_readings.get(a, []):
+        for va in variants_first(ra):
+            if not va or not r.startswith(va): continue
+            rest = r[len(va):]
+            if not rest: continue
+            for rb, tb in all_readings.get(b, []):
+                if rest in variants_second(rb):
+                    score = (ta == 'on') + (tb == 'on')  # 音読み同士を優先
+                    cands.append((score, len(va), va, rest))
+    if not cands: return None
+    cands.sort(reverse=True)
+    return [cands[0][2], cands[0][3]]
 
 cand = json.load(open(os.path.join(WORK, 'jukugo_candidates.json'), encoding='utf-8'))
 
@@ -106,7 +150,10 @@ for w, v in cand.items():
     if m2 != m: hira_fixed += 1
     m = re.sub(r'\s+', ' ', m2).strip()
     if len(m) > 28: m = m[:28]
-    words.append([w, v['r'], v['g'], k, v['score'], m])
+    sp = split_reading(w, v['r'])
+    if sp: stats['split_ok'] += 1
+    else: stats['split_fail'] += 1
+    words.append([w, v['r'], v['g'], k, v['score'], m, sp])
     stats[(v['g'], k)] += 1
 
 words.sort(key=lambda x: (x[2], x[4], x[0]))
@@ -115,6 +162,7 @@ with open(os.path.join(ROOT, 'public', 'data', 'dict.json'), 'w', encoding='utf-
     json.dump({'kanji': kanji, 'words': words}, f, ensure_ascii=False, separators=(',', ':'))
 
 print('words:', len(words), 'excluded:', stats['excluded'], 'untagged:', untagged, 'rule:', dict(rule_hits), '意味ひらがな化:', hira_fixed)
+print('読み分割 成功:', stats['split_ok'], ' 失敗:', stats['split_fail'])
 pairs = [(key, c) for key, c in stats.items() if isinstance(key, tuple)]
 for g in (1,2,3,4,5,6,8):
     print(f"  grade<={g}: k1={sum(c for (gg,k),c in pairs if gg<=g and k==1)} k<=2={sum(c for (gg,k),c in pairs if gg<=g and k<=2)} all={sum(c for (gg,k),c in pairs if gg<=g)}")

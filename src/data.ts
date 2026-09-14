@@ -9,8 +9,8 @@ export class Dictionary {
 
   constructor(d: Dict) {
     this.kanji = d.kanji;
-    for (const [w, r, g, k, score, m] of d.words) {
-      const info: WordInfo = { w, r, g, k, score, m };
+    for (const [w, r, g, k, score, m, split] of d.words) {
+      const info: WordInfo = { w, r, g, k, score, m, split: split ?? null };
       this.words.set(w, info);
       const list = this.next.get(w[0]);
       if (list) list.push(info);
@@ -47,11 +47,20 @@ export class Dictionary {
     return list;
   }
 
-  /** タイルに添える読み（訓読み優先、なければ音読み） */
+  /** タイルに添える既定の読み。熟語では音読みが多いので音読み優先、なければ訓読み */
   reading(c: string): string {
     const e = this.kanji[c];
     if (!e) return '';
-    return e[1] || e[2] || '';
+    return e[2] || e[1] || '';
+  }
+
+  /** 熟語 prev+c における c の読み（分割できない語は null） */
+  readingIn(prev: string, c: string): string | null {
+    return this.word(prev, c)?.split?.[1] ?? null;
+  }
+  /** 熟語 c+next における c の読み */
+  readingBefore(c: string, next: string): string | null {
+    return this.word(c, next)?.split?.[0] ?? null;
   }
 
   grade(c: string): number {

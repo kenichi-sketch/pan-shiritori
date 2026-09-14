@@ -2,8 +2,8 @@
 export interface Dict {
   /** 漢字 → [学年(1-6,8), 訓読み, 音読み] */
   kanji: Record<string, [number, string, string]>;
-  /** [熟語, 読み, 学年, 子ども向け度(1-3), 頻度スコア(小さいほど一般的), 意味] */
-  words: [string, string, number, number, number, string][];
+  /** [熟語, 読み, 学年, 子ども向け度(1-3), 頻度スコア(小さいほど一般的), 意味, 読みの2字分割 or null] */
+  words: [string, string, number, number, number, string, [string, string] | null][];
 }
 
 export interface WordInfo {
@@ -13,6 +13,8 @@ export interface WordInfo {
   k: number;
   score: number;
   m: string;
+  /** 1字目・2字目それぞれの読み（熟辞訓などで分けられない語は null） */
+  split: [string, string] | null;
 }
 
 /** カテゴリ = 出題漢字の上限学年。1..6 = 小1〜小6まで, 8 = 中3まで */
