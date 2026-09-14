@@ -169,8 +169,8 @@ export function touchPlay(p: Profile): void {
 }
 
 // ---- アプリ全体設定（報告先URLなど） ----
-/** 既定の報告先（有澤さんの Google Apps Script）。親メニューで上書き可能 */
-export const DEFAULT_REPORT_URL = 'https://script.google.com/macros/s/AKfycbyivh6Yj3_qjcLyZXZ_tOU1IHzr-FWu9cUOU52Sg3KVYxLCNJ_rEYN-TFf0KRt2lG0ZBg/exec';
+/** 既定の報告先（Google Apps Script）。ビルド時に環境変数 VITE_REPORT_URL から埋め込む。親メニューで上書き可能 */
+export const DEFAULT_REPORT_URL: string = import.meta.env.VITE_REPORT_URL ?? '';
 export function loadSettings(): AppSettings {
   const s = load<AppSettings>(KEY_SETTINGS, { reportUrl: DEFAULT_REPORT_URL, reports: [] });
   if (!s.reportUrl) s.reportUrl = DEFAULT_REPORT_URL;

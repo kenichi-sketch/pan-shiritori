@@ -100,7 +100,7 @@ export function mountParent(root: HTMLElement, dict: Dictionary, current: Profil
     ...profiles.map(profileCard),
     h('div', { class: 'card' },
       h('h3', null, '「へんなことば」報告の送り先（Google Apps Script の URL）'),
-      h('p', { class: 'sub' }, 'クリア画面の 🚩 を押すと、ここに設定した URL に送られ、スプレッドシートに記録されます。初期値は有澤さんのシートの URL です。別のシートにしたいときだけ書き換えてください。'),
+      h('p', { class: 'sub' }, 'クリア画面の 🚩 を押すと、ここに設定した URL に送られ、スプレッドシートに記録されます。初期値は公開時に設定した URL です。別のシートにしたいときだけ書き換えてください。'),
       urlInput,
       h('h3', { style: { marginTop: '14px' } }, 'この端末に保存されている報告'),
       reportsEl,

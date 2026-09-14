@@ -5,3 +5,6 @@ data/work/jukugo_candidates.json
 dev-dist/
 *.pyc
 __pycache__/
+.env
+.env.local
+.env.*.local
