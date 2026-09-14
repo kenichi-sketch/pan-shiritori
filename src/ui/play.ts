@@ -123,7 +123,9 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     puzzleStart = performance.now();
     renderTray();
     renderChain();
-    progressBadge.textContent = opt.mode === 'score' ? `${solvedCount + 1} / ${totalCount}もんめ` : `${puzzle.cfg.n}まい`;
+    // 「7まい」はマスを見れば分かるので出さない（2026-09-15 有澤さん指摘）。スコアアタックの進み（3 / 5もんめ）だけ出す
+    progressBadge.textContent = opt.mode === 'score' ? `${solvedCount + 1} / ${totalCount}もんめ` : '';
+    progressBadge.style.display = opt.mode === 'score' ? '' : 'none';
     const n = puzzle.cfg.n;
     if (puzzle.first) say(`「${puzzle.first}」から はじめて、${n}まい つなげよう！`);
     else say(`すきな 1まいから はじめて、${n}まい つなげよう！`);

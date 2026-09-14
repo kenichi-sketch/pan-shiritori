@@ -172,8 +172,8 @@ img { -webkit-user-drag: none; }
 
 /* ---------- プレイ ---------- */
 .play { display: flex; flex-direction: column; gap: 12px; flex: 1; }
-.play-head { display: flex; align-items: center; gap: 10px; }
-.badge { background: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(120, 80, 30, 0.08); }
+.play-head { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }   /* 入り切らない時は下の行へ（1文字ずつ縦に潰れない） */
+.badge { background: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(120, 80, 30, 0.08); white-space: nowrap; flex: none; }
 .chain { display: flex; gap: 6px; align-items: flex-end; justify-content: center; flex-wrap: wrap; padding: 12px 6px 6px; min-height: calc(var(--tile-size) + 44px); }
 .slot { width: var(--tile-size); height: var(--tile-size); border-radius: 16px; border: 3px dashed var(--tile-border); background: rgba(255, 255, 255, 0.5); display: grid; place-items: center; position: relative; }
 .slot.filled { border-style: solid; border-color: var(--accent); background: var(--tile); }
@@ -280,7 +280,9 @@ img { -webkit-user-drag: none; }
   .word-item .mn { font-size: 0.85rem; }
   .word-item .flag { font-size: 0.78rem; padding: 3px 8px; }
   .stat { padding: 6px 10px; font-size: 0.95rem; }
-  .home-actions .btn { white-space: normal; line-height: 1.25; font-size: 0.95rem; }   /* 「スコアアタック（レベル1〜5 とおし）」が切れないように */
+  .home-actions .btn { white-space: normal; line-height: 1.25; font-size: 0.95rem; }
+  .badge { padding: 5px 10px; font-size: 0.9rem; }
+  .play-head .icon-btn { width: 42px; height: 42px; font-size: 1.2rem; }   /* 「スコアアタック（レベル1〜5 とおし）」が切れないように */
 }
 
 /* ---------- 検索向けの説明文（画面の下・2026-09-15） ---------- */
