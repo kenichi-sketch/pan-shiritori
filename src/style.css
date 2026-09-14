@@ -298,3 +298,26 @@ img { -webkit-user-drag: none; }
 .install-title { font-weight: 900; margin-bottom: 6px; text-align: center; }
 .install-steps { display: grid; gap: 4px; font-size: 0.95rem; }
 .install-steps b { color: var(--accent-dark); }
+
+/* ---------- 得点一覧 ---------- */
+.stat-btn { border: 2px solid var(--tile-border); cursor: pointer; color: var(--ink-soft); font-size: 0.95rem; }
+.stat-btn:active { transform: translateY(2px); }
+.rank-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+.rank-table td { background: #fff; padding: 6px 8px; vertical-align: middle; }
+.rank-table td:first-child { border-radius: 12px 0 0 12px; }
+.rank-table td:last-child { border-radius: 0 12px 12px 0; }
+.rank-table img { width: 30px; height: 30px; object-fit: contain; display: block; }
+.rank-table .rk { font-weight: 900; width: 3em; }
+.rank-table .nm { font-weight: 700; }
+.rank-table .sc { text-align: right; font-weight: 900; color: var(--accent-dark); white-space: nowrap; }
+.rank-table .tm { text-align: right; color: var(--ink-soft); font-size: 0.85rem; white-space: nowrap; }
+.rank-table tr.me td { background: #fff3dc; }
+@media (max-width: 480px) { .rank-table .tm { display: none; } }
+
+/* ---------- スマホ幅の微調整（2026-09-15 確認分） ---------- */
+@media (max-width: 480px) {
+  .topbar .sub { display: none; }                 /* 図鑑の「タップで よみあげ」がタイトルを折り返していた */
+  .topbar .title { font-size: 1.2rem; }
+  .home-actions { grid-template-columns: 1fr; }   /* スコアアタックの文字が3行になっていた */
+  .stats .stat { padding: 6px 10px; font-size: 0.9rem; }
+}

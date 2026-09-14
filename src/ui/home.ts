@@ -9,6 +9,7 @@ import { Character } from './character';
 import { clear, h } from './dom';
 import { openShareModal } from './share';
 import { isStandalone, openInstallModal } from './install';
+import { openScoresModal } from './scores';
 
 export interface HomeActions {
   play: (cat: Category, level: number) => void;
@@ -116,6 +117,7 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
       h('div', { class: 'stat' }, '⭐ ', h('span', { class: 'num' }, String(p.progress.stamps)), ' スタンプ'),
       h('div', { class: 'stat' }, '🔥 ', h('span', { class: 'num' }, String(p.progress.streak)), ' にち れんぞく'),
       h('div', { class: 'stat' }, '📖 ', h('span', { class: 'num' }, String(Object.keys(p.progress.collected).length)), ' ことば'),
+      h('button', { class: 'stat stat-btn', onClick: () => { sfx.tap(); openScoresModal(p); } }, '🏅 とくてん いちらん'),
     ),
     h('h3', { style: { margin: '14px 0 0' } }, 'どの かんじで あそぶ？'),
     h('p', { class: 'sub', style: { margin: '0 0 6px' } }, '🔒は いまの がくねんで レベル3を クリアすると ひらくよ（おうちのひと メニューからも ひらけます）'),
