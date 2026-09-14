@@ -57,7 +57,9 @@ export function generatePuzzle(dict: Dictionary, cat: Category, cfg: LevelConfig
   const rng = mulberry32(seed);
   let n = cfg.n;
   let answer = findChain(dict, cat, n, rng, avoid);
-  while (!answer && n > 3) { n--; answer = findChain(dict, cat, n, rng, avoid); }
+  // 最近出した問題を避けて見つからなければ（語数の少ない小1など）、重複を許して探す
+  if (!answer && avoid.size) answer = findChain(dict, cat, n, rng, new Set());
+  while (!answer && n > 3) { n--; answer = findChain(dict, cat, n, rng, new Set()); }
   if (!answer) throw new Error('puzzle generation failed');
 
   const used = new Set(answer);

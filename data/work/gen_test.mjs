@@ -128,9 +128,10 @@ function generatePuzzle(dict2, cat, cfg, seed, avoid = /* @__PURE__ */ new Set()
   const rng = mulberry32(seed);
   let n = cfg.n;
   let answer = findChain(dict2, cat, n, rng, avoid);
+  if (!answer && avoid.size) answer = findChain(dict2, cat, n, rng, /* @__PURE__ */ new Set());
   while (!answer && n > 3) {
     n--;
-    answer = findChain(dict2, cat, n, rng, avoid);
+    answer = findChain(dict2, cat, n, rng, /* @__PURE__ */ new Set());
   }
   if (!answer) throw new Error("puzzle generation failed");
   const used = new Set(answer);
