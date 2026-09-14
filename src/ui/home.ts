@@ -1,6 +1,6 @@
 import type { Dictionary } from '../data';
 import { BREADS, PANURANAI_URL, breadImage } from '../chars';
-import { CLEARS_TO_UNLOCK, L5_CLEARS_PER_STAR, availableCategories, categoryForGrade, gradeLabel, level5Star, maxUnlockedLevel, saveProfile, schoolGrade, todayStr } from '../profile';
+import { CLEARS_TO_UNLOCK, L5_CLEARS_PER_STAR, availableCategories, categoryForGrade, gradeLabel, level5Star, maxUnlockedLevel, nextCategory, saveProfile, schoolGrade, todayStr } from '../profile';
 import { bestFor } from '../ranking';
 import { sfx } from '../audio';
 import type { Category, Profile } from '../types';
@@ -35,6 +35,16 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
   const ch = new Character(p.bread, 130);
   ch.mood('wave', 1300);
 
+  function goalText(): string {
+    if (p.progress.totalPuzzles === 0) return 'まずは 「レベル1」を おしてみよう！';
+    const parts: string[] = [];
+    if (maxLv < 5) parts.push(`レベル${maxLv + 1}が ひらくまで あと${CLEARS_TO_UNLOCK - (p.progress.clears[maxLv] ?? 0)}かい`);
+    const nx = nextCategory(cat);
+    if (nx && !cats.includes(nx) && maxLv >= 3) parts.push(`レベル3を クリアすると 「${CATEGORY_LABEL[nx]}」の かんじが ひらくよ`);
+    else if (nx && !cats.includes(nx)) parts.push(`レベル3まで いくと つぎの がくねんの かんじが ひらくよ`);
+    return parts.join('。') || 'きょうも いっしょに あそぼう！';
+  }
+
   const levelsEl = h('div', { class: 'levels' });
   const chipsEl = h('div', { class: 'chips' });
 
@@ -55,14 +65,16 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
     for (let lv = 1; lv <= 5; lv++) {
       const locked = lv > maxLv;
       const clears = p.progress.clears[lv] ?? 0;
+      const recommended = !locked && lv === maxLv && (lv === 1 ? p.progress.totalPuzzles === 0 : true);
       const dots = lv < 5
         ? h('div', { class: 'dots' }, ...Array.from({ length: CLEARS_TO_UNLOCK }, (_, i) => h('i', { class: i < clears ? 'on' : '' })))
         : h('div', { class: 'dots' }, ...Array.from({ length: L5_CLEARS_PER_STAR }, (_, i) => h('i', { class: i < (p.progress.l5clears % L5_CLEARS_PER_STAR) || star >= 3 ? 'on' : '' })));
       levelsEl.appendChild(h('button', {
-        class: `level-btn ${locked ? 'locked' : ''}`,
+        class: `level-btn ${locked ? 'locked' : ''} ${recommended ? 'recommended' : ''}`,
         disabled: locked,
         onClick: () => { sfx.tap(); act.play(cat, lv); },
       },
+        recommended ? h('span', { class: 'here' }, p.progress.totalPuzzles === 0 ? 'ここから！' : 'つぎは これ') : null,
         h('span', { class: 'lv' }, 'レベル'),
         h('span', { class: 'n' }, locked ? '🔒' : String(lv)),
         h('span', { class: 'desc' }, lv === 5 ? (star >= 3 ? '8まい' : '7まい') : LEVEL_DESC[lv - 1]),
@@ -96,7 +108,7 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
     h('div', { class: 'home-hero' },
       ch.el,
       h('div', { class: 'bubble' },
-        `${greet}、${p.name}！`, h('br'),
+        `${greet}、${p.name}！ ${goalText()}`, h('br'),
         h('span', { class: 'sub' }, `${bread.name}の もうしごと いっしょに かんじを つなげよう。いまは ${gradeLabel(schoolGrade(p.birth))}。`),
       ),
     ),
@@ -105,7 +117,8 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
       h('div', { class: 'stat' }, '🔥 ', h('span', { class: 'num' }, String(p.progress.streak)), ' にち れんぞく'),
       h('div', { class: 'stat' }, '📖 ', h('span', { class: 'num' }, String(Object.keys(p.progress.collected).length)), ' ことば'),
     ),
-    h('h3', { style: { margin: '14px 0 6px' } }, 'どの かんじで あそぶ？'),
+    h('h3', { style: { margin: '14px 0 0' } }, 'どの かんじで あそぶ？'),
+    h('p', { class: 'sub', style: { margin: '0 0 6px' } }, '🔒は いまの がくねんで レベル3を クリアすると ひらくよ（おうちのひと メニューからも ひらけます）'),
     chipsEl,
     h('h3', { style: { margin: '14px 0 0' } }, 'レベルを えらぼう'),
     h('p', { class: 'sub', style: { margin: '0 0 4px' } }, `${CLEARS_TO_UNLOCK}かい クリアすると つぎの レベルが ひらくよ`),
