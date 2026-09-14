@@ -1,0 +1,131 @@
+import type { Dictionary } from '../data';
+import { BREADS, PANURANAI_URL, breadImage } from '../chars';
+import { CLEARS_TO_UNLOCK, L5_CLEARS_PER_STAR, availableCategories, categoryForGrade, gradeLabel, level5Star, maxUnlockedLevel, saveProfile, schoolGrade, todayStr } from '../profile';
+import { bestFor } from '../ranking';
+import { sfx } from '../audio';
+import type { Category, Profile } from '../types';
+import { CATEGORIES, CATEGORY_LABEL } from '../types';
+import { Character } from './character';
+import { clear, h } from './dom';
+
+export interface HomeActions {
+  play: (cat: Category, level: number) => void;
+  daily: (cat: Category, level: number) => void;
+  score: (cat: Category, level: number, count: number) => void;
+  zukan: () => void;
+  parent: () => void;
+  switchProfile: () => void;
+}
+
+const LEVEL_DESC = ['3まい', '4まい', '5まい', '6まい', '7まい'];
+const KEY_CAT = 'panshiri.selcat.';
+
+export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: HomeActions): () => void {
+  const cats = availableCategories(p);
+  const saved = Number(localStorage.getItem(KEY_CAT + p.id) || '');
+  let cat: Category = (cats as number[]).includes(saved) ? (saved as Category) : categoryForGrade(schoolGrade(p.birth));
+  if (!cats.includes(cat)) cat = cats[cats.length - 1];
+  const maxLv = maxUnlockedLevel(p);
+  const star = level5Star(p);
+  const hour = new Date().getHours();
+  const greet = hour < 10 ? 'おはよう' : hour < 17 ? 'こんにちは' : 'こんばんは';
+  const dailyDone = p.progress.dailyDone === todayStr();
+  const bread = BREADS[p.bread];
+
+  const ch = new Character(p.bread, 130);
+  ch.mood('wave', 1300);
+
+  const levelsEl = h('div', { class: 'levels' });
+  const chipsEl = h('div', { class: 'chips' });
+
+  function renderChips(): void {
+    clear(chipsEl);
+    for (const c of CATEGORIES) {
+      const open = cats.includes(c);
+      chipsEl.appendChild(h('button', {
+        class: `chip ${c === cat ? 'active' : ''} ${open ? '' : 'locked'}`,
+        disabled: !open,
+        onClick: () => { sfx.tap(); cat = c; localStorage.setItem(KEY_CAT + p.id, String(c)); renderChips(); renderLevels(); },
+      }, open ? CATEGORY_LABEL[c] : `🔒 ${CATEGORY_LABEL[c]}`));
+    }
+  }
+
+  function renderLevels(): void {
+    clear(levelsEl);
+    for (let lv = 1; lv <= 5; lv++) {
+      const locked = lv > maxLv;
+      const clears = p.progress.clears[lv] ?? 0;
+      const dots = lv < 5
+        ? h('div', { class: 'dots' }, ...Array.from({ length: CLEARS_TO_UNLOCK }, (_, i) => h('i', { class: i < clears ? 'on' : '' })))
+        : h('div', { class: 'dots' }, ...Array.from({ length: L5_CLEARS_PER_STAR }, (_, i) => h('i', { class: i < (p.progress.l5clears % L5_CLEARS_PER_STAR) || star >= 3 ? 'on' : '' })));
+      levelsEl.appendChild(h('button', {
+        class: `level-btn ${locked ? 'locked' : ''}`,
+        disabled: locked,
+        onClick: () => { sfx.tap(); act.play(cat, lv); },
+      },
+        h('span', { class: 'lv' }, 'レベル'),
+        h('span', { class: 'n' }, locked ? '🔒' : String(lv)),
+        h('span', { class: 'desc' }, lv === 5 ? (star >= 3 ? '8まい' : '7まい') : LEVEL_DESC[lv - 1]),
+        lv === 5 && !locked ? h('span', { class: 'stars' }, '★'.repeat(star) + '☆'.repeat(3 - star)) : dots,
+      ));
+    }
+  }
+  renderChips(); renderLevels();
+
+  const scoreBtn = (count: number) => h('button', { class: 'btn blue', onClick: () => { sfx.tap(); act.score(cat, maxLv, count); } },
+    `🏅 スコア ${count}もん`);
+
+  const best5 = bestFor(p.id, cat, maxLv, 5); const best10 = bestFor(p.id, cat, maxLv, 10);
+
+  // パン占いへ（生年月日を POST して結果ページを開く）
+  const [by, bm, bd] = p.birth.split('-');
+  const uranaiForm = h('form', { method: 'POST', action: `${PANURANAI_URL}/diagnose`, target: '_blank', style: { display: 'inline' } },
+    h('input', { type: 'hidden', name: 'year', value: by }),
+    h('input', { type: 'hidden', name: 'month', value: String(Number(bm)) }),
+    h('input', { type: 'hidden', name: 'day', value: String(Number(bd)) }),
+    h('button', { type: 'submit', class: 'btn ghost small' }, '🔮 きょうの うらない'),
+  );
+
+  clear(root);
+  root.appendChild(h('div', { class: 'screen' },
+    h('div', { class: 'topbar' },
+      h('h1', { class: 'title' }, '🥐 パンしりとり'),
+      h('span', { class: 'spacer' }),
+      h('button', { class: 'btn ghost small', onClick: () => { sfx.tap(); act.switchProfile(); } }, h('img', { src: breadImage(p.bread), style: { width: '24px', height: '24px' } }), p.name, ' ▾'),
+    ),
+    h('div', { class: 'home-hero' },
+      ch.el,
+      h('div', { class: 'bubble' },
+        `${greet}、${p.name}！`, h('br'),
+        h('span', { class: 'sub' }, `${bread.name}の もうしごと いっしょに かんじを つなげよう。いまは ${gradeLabel(schoolGrade(p.birth))}。`),
+      ),
+    ),
+    h('div', { class: 'stats' },
+      h('div', { class: 'stat' }, '⭐ ', h('span', { class: 'num' }, String(p.progress.stamps)), ' スタンプ'),
+      h('div', { class: 'stat' }, '🔥 ', h('span', { class: 'num' }, String(p.progress.streak)), ' にち れんぞく'),
+      h('div', { class: 'stat' }, '📖 ', h('span', { class: 'num' }, String(Object.keys(p.progress.collected).length)), ' ことば'),
+    ),
+    h('h3', { style: { margin: '14px 0 6px' } }, 'どの かんじで あそぶ？'),
+    chipsEl,
+    h('h3', { style: { margin: '14px 0 0' } }, 'レベルを えらぼう'),
+    h('p', { class: 'sub', style: { margin: '0 0 4px' } }, `${CLEARS_TO_UNLOCK}かい クリアすると つぎの レベルが ひらくよ`),
+    levelsEl,
+    h('div', { class: 'home-actions' },
+      h('button', { class: `btn ${dailyDone ? 'ghost' : 'pink'}`, onClick: () => { sfx.tap(); act.daily(cat, maxLv); } }, dailyDone ? '☀ きょうの1もん ✓' : '☀ きょうの1もん'),
+      scoreBtn(5),
+      scoreBtn(10),
+      h('button', { class: 'btn green', onClick: () => { sfx.tap(); act.zukan(); } }, '📖 ことばずかん'),
+    ),
+    best5 || best10 ? h('p', { class: 'sub center', style: { margin: '6px 0 0' } },
+      `さいこうてん（${CATEGORY_LABEL[cat]} レベル${maxLv}）: `,
+      best5 ? `5もん ${best5.score}てん` : '', best5 && best10 ? ' ／ ' : '', best10 ? `10もん ${best10.score}てん` : '') : null,
+    h('div', { class: 'home-footer' },
+      h('div', { class: 'row' }, uranaiForm, h('a', { href: PANURANAI_URL, target: '_blank', rel: 'noopener', class: 'small-link' }, 'パン占いへ')),
+      h('button', { class: 'small-link', onClick: () => { sfx.tap(); act.parent(); } }, 'おうちのひと メニュー'),
+    ),
+  ));
+
+  // 4月の進級を通知（保存はしない: 学年は生年月日から毎回計算）
+  void saveProfile;
+  return () => ch.destroy();
+}

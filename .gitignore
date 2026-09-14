@@ -1,0 +1,7 @@
+node_modules/
+dist/
+data/raw/
+data/work/jukugo_candidates.json
+dev-dist/
+*.pyc
+__pycache__/
