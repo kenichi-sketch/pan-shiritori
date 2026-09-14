@@ -1,5 +1,5 @@
 import type { Dictionary } from '../data';
-import { checkChain, generatePuzzle, hint as findHint, levelConfig } from '../game';
+import { availableWordCount, checkChain, generatePuzzle, hint as findHint, levelConfig } from '../game';
 import { level5Star, recordClear, reportWord, saveProfile, schoolGrade, todayStr, touchPlay } from '../profile';
 import { hashString, randomSeed } from '../rng';
 import { addRecord, bestFor, fmtTime, puzzleScore, rankingFor } from '../ranking';
@@ -24,6 +24,16 @@ export interface PlayOptions {
 }
 
 const recentKeys = new Set<string>();
+/** 最近出した熟語（セッション内で共有）。同じ語が続けて出るのを防ぐ */
+const recentWords = new Set<string>();
+/** 覚えておく語数。語数の少ないカテゴリ（小1は約130語）では少なめにして、出題が組めなくなるのを防ぐ */
+function rememberWords(answer: string[], maxRecent: number): void {
+  for (let i = 0; i + 1 < answer.length; i++) {
+    const w = answer[i] + answer[i + 1];
+    recentWords.delete(w); recentWords.add(w);
+  }
+  while (recentWords.size > maxRecent) recentWords.delete(recentWords.values().next().value as string);
+}
 
 export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   const { dict, profile } = opt;
@@ -36,6 +46,8 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   let showFurigana = cfg.furigana && profile.settings.furigana;
 
   let puzzle!: Puzzle;
+  /** 今回のセット（通常は直前の1問、スコアアタックは5問）で使った熟語 */
+  const runWords = new Set<string>();
   let placed: string[] = [];
   let tray: { k: string; used: boolean; el: HTMLElement }[] = [];
   let usedHint = false;
@@ -97,8 +109,12 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     showFurigana = cfg.furigana && profile.settings.furigana;
     levelBadge.textContent = `レベル${currentLevel}${currentLevel === 5 ? ' ' + '★'.repeat(star) : ''}`;
     const seed = opt.mode === 'daily' ? hashString(`${todayStr()}|${opt.cat}|${opt.level}|${profile.birth}`) : randomSeed();
-    puzzle = generatePuzzle(dict, opt.cat, cfg, seed, recentKeys);
+    // 通常モードでは直前の問題の語、スコアアタックでは今回のセット全体の語を絶対に避ける
+    if (opt.mode !== 'score' || solvedCount === 0) runWords.clear();
+    puzzle = generatePuzzle(dict, opt.cat, cfg, seed, recentKeys, recentWords, runWords);
     recentKeys.add(puzzle.answer.join(''));
+    rememberWords(puzzle.answer, Math.max(15, Math.min(60, Math.floor(availableWordCount(dict, opt.cat) / 3))));
+    for (let i = 0; i + 1 < puzzle.answer.length; i++) runWords.add(puzzle.answer[i] + puzzle.answer[i + 1]);
     if (recentKeys.size > 200) recentKeys.delete(recentKeys.values().next().value as string);
     placed = puzzle.first ? [puzzle.first] : [];
     usedHint = false;

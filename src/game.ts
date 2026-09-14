@@ -1,6 +1,6 @@
 import type { Dictionary } from './data';
 import type { Category, LevelConfig, Puzzle } from './types';
-import { mulberry32, pick, shuffle, type Rng } from './rng';
+import { mulberry32, shuffle, type Rng } from './rng';
 
 export function levelConfig(level: number, star = 1): LevelConfig {
   switch (level) {
@@ -20,13 +20,20 @@ function scoreLimit(cat: Category): number {
   return cat <= 2 ? 99 : cat <= 4 ? 48 : 40;
 }
 
-/** ランダムウォーク＋バックトラックで n 枚の連鎖を1本作る */
-function findChain(dict: Dictionary, cat: Category, n: number, rng: Rng, avoid: Set<string>): string[] | null {
-  const kanji = dict.kanjiInCategory(cat);
+/**
+ * ランダムウォーク＋バックトラックで n 枚の連鎖を1本作る。
+ * avoidWords（最近出した熟語）は strict なら使わない、そうでなければ後回しにする。
+ */
+function findChain(dict: Dictionary, cat: Category, n: number, rng: Rng, avoid: Set<string>, avoidWords: Set<string>, hardAvoid: Set<string>, strict: boolean): string[] | null {
   const limit = scoreLimit(cat);
-  for (let attempt = 0; attempt < 300; attempt++) {
-    const start = pick(kanji, rng);
-    if (dict.successors(start, cat, limit).length === 0) continue;
+  const banned = (w: string) => hardAvoid.has(w) || (strict && avoidWords.has(w));
+  // 出発点は「使える後続語がある漢字」から順番に試す
+  const starts = shuffle(
+    dict.kanjiInCategory(cat).filter((k) => dict.successors(k, cat, limit).some((x) => !banned(x.w))),
+    rng,
+  );
+  for (let attempt = 0; attempt < Math.min(300, starts.length); attempt++) {
+    const start = starts[attempt];
     const path = [start];
     const used = new Set(path);
     let steps = 0;
@@ -34,10 +41,10 @@ function findChain(dict: Dictionary, cat: Category, n: number, rng: Rng, avoid: 
       if (path.length === n) return true;
       if (++steps > 4000) return false;
       const cur = path[path.length - 1];
-      const cands = dict.successors(cur, cat, limit).filter((x) => !used.has(x.w[1]));
-      // 一般的な語をやや優先しつつランダムに
+      const cands = dict.successors(cur, cat, limit).filter((x) => !used.has(x.w[1]) && !banned(x.w));
+      // 語の偏りを防ぐため頻度の重みは弱め。最近出した語は後回し
       const ordered = shuffle(cands, rng)
-        .map((c) => ({ c, key: c.score + rng() * 40 }))
+        .map((c) => ({ c, key: c.score * 0.3 + rng() * 40 + (avoidWords.has(c.w) ? 200 : 0) }))
         .sort((a, b) => a.key - b.key)
         .map((x) => x.c);
       for (const c of ordered) {
@@ -53,13 +60,29 @@ function findChain(dict: Dictionary, cat: Category, n: number, rng: Rng, avoid: 
   return null;
 }
 
-export function generatePuzzle(dict: Dictionary, cat: Category, cfg: LevelConfig, seed: number, avoid = new Set<string>()): Puzzle {
+/** そのカテゴリで出題に使える熟語の数（「最近出した語」を覚えておく量の目安に使う） */
+export function availableWordCount(dict: Dictionary, cat: Category): number {
+  const limit = scoreLimit(cat);
+  let n = 0;
+  for (const k of dict.kanjiInCategory(cat)) n += dict.successors(k, cat, limit).length;
+  return n;
+}
+
+/**
+ * 出題を1つ作る。
+ * avoid: 最近出した連鎖（丸ごと同じ問題を避ける）
+ * avoidWords: 最近出した熟語（まず完全に避け、無理なら後回しにして探す）
+ * hardAvoid: 今回のセット（スコアアタックの5問など）で既に出た熟語。可能な限り絶対に使わない
+ */
+export function generatePuzzle(dict: Dictionary, cat: Category, cfg: LevelConfig, seed: number, avoid = new Set<string>(), avoidWords = new Set<string>(), hardAvoid = new Set<string>()): Puzzle {
   const rng = mulberry32(seed);
   let n = cfg.n;
-  let answer = findChain(dict, cat, n, rng, avoid);
-  // 最近出した問題を避けて見つからなければ（語数の少ない小1など）、重複を許して探す
-  if (!answer && avoid.size) answer = findChain(dict, cat, n, rng, new Set());
-  while (!answer && n > 3) { n--; answer = findChain(dict, cat, n, rng, new Set()); }
+  let answer = findChain(dict, cat, n, rng, avoid, avoidWords, hardAvoid, true);
+  if (!answer) answer = findChain(dict, cat, n, rng, avoid, avoidWords, hardAvoid, false);
+  // 語数の少ない小1などで見つからなければ、段階的に条件を緩める
+  if (!answer && avoid.size) answer = findChain(dict, cat, n, rng, new Set(), avoidWords, hardAvoid, false);
+  if (!answer && hardAvoid.size) answer = findChain(dict, cat, n, rng, new Set(), avoidWords, new Set(), false);
+  while (!answer && n > 3) { n--; answer = findChain(dict, cat, n, rng, new Set(), avoidWords, new Set(), false); }
   if (!answer) throw new Error('puzzle generation failed');
 
   const used = new Set(answer);

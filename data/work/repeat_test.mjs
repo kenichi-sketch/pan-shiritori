@@ -1,4 +1,4 @@
-// scripts/gen_test.ts
+// scripts/repeat_test.ts
 import { readFileSync } from "node:fs";
 
 // src/data.ts
@@ -132,6 +132,12 @@ function findChain(dict2, cat, n, rng, avoid, avoidWords, hardAvoid, strict) {
   }
   return null;
 }
+function availableWordCount(dict2, cat) {
+  const limit = scoreLimit(cat);
+  let n = 0;
+  for (const k of dict2.kanjiInCategory(cat)) n += dict2.successors(k, cat, limit).length;
+  return n;
+}
 function generatePuzzle(dict2, cat, cfg, seed, avoid = /* @__PURE__ */ new Set(), avoidWords = /* @__PURE__ */ new Set(), hardAvoid = /* @__PURE__ */ new Set()) {
   const rng = mulberry32(seed);
   let n = cfg.n;
@@ -152,81 +158,39 @@ function generatePuzzle(dict2, cat, cfg, seed, avoid = /* @__PURE__ */ new Set()
   const tiles = shuffle([...rest, ...dummies], rng);
   return { cat, cfg: { ...cfg, n: answer.length }, answer, tiles, first, seed };
 }
-function checkChain(dict2, chain) {
-  const joints = [];
-  for (let i = 0; i + 1 < chain.length; i++) joints.push(dict2.isWord(chain[i], chain[i + 1]));
-  return { ok: joints.every(Boolean), joints };
-}
-function hint(dict2, placed, remaining, n) {
-  for (let i = 0; i + 1 < placed.length; i++) {
-    if (!dict2.isWord(placed[i], placed[i + 1])) return { removeFrom: i + 1 };
-  }
-  const need = n - placed.length;
-  if (need <= 0) return {};
-  const canFinish = (last2, left, depth) => {
-    if (depth === 0) return true;
-    for (let i = 0; i < left.length; i++) {
-      if (dict2.isWord(last2, left[i])) {
-        if (canFinish(left[i], left.slice(0, i).concat(left.slice(i + 1)), depth - 1)) return true;
-      }
-    }
-    return false;
-  };
-  if (placed.length === 0) {
-    for (const t of remaining) {
-      if (canFinish(t, remaining.filter((x) => x !== t), need - 1)) return { tile: t };
-    }
-    return {};
-  }
-  const last = placed[placed.length - 1];
-  for (const t of remaining) {
-    if (dict2.isWord(last, t) && canFinish(t, remaining.filter((x) => x !== t), need - 1)) return { tile: t };
-  }
-  return { removeFrom: Math.max(0, placed.length - 1) };
-}
 
-// scripts/gen_test.ts
+// scripts/repeat_test.ts
 var dict = new Dictionary(JSON.parse(readFileSync("public/data/dict.json", "utf-8")));
-var cats = [1, 2, 3, 4, 5, 6, 8];
-var configs = [levelConfig(1), levelConfig(2), levelConfig(3), levelConfig(4), levelConfig(5, 1), levelConfig(5, 2), levelConfig(5, 3)];
-var fails = 0;
-var shortened = 0;
-for (const cat of cats) {
-  for (const cfg of configs) {
-    const t0 = performance.now();
-    const N = 60;
-    const uniq = /* @__PURE__ */ new Set();
-    let hintOk = 0;
-    for (let i = 0; i < N; i++) {
-      try {
-        const p = generatePuzzle(dict, cat, cfg, (cat * 1e3 + cfg.level * 10 + cfg.star) * 7919 + i);
-        if (!checkChain(dict, p.answer).ok) throw new Error("answer invalid");
-        if (p.answer.length < cfg.n) shortened++;
-        uniq.add(p.answer.join(""));
-        const placed = p.first ? [p.first] : [];
-        let remaining = p.tiles.slice();
-        let ok = true;
-        while (placed.length < p.cfg.n) {
-          const r = hint(dict, placed, remaining, p.cfg.n);
-          if (!r.tile) {
-            ok = false;
-            break;
-          }
-          placed.push(r.tile);
-          remaining = remaining.filter((x) => x !== r.tile);
-        }
-        if (ok) hintOk++;
-      } catch (e) {
-        fails++;
-        console.log("FAIL", cat, cfg.level, cfg.star, e.message);
-      }
+for (const cat of [1, 2, 3]) {
+  let totalWords = 0, repeatsInRun = 0, repeatsRecent = 0;
+  const RUNS = 40;
+  const recentKeys = /* @__PURE__ */ new Set();
+  const recentWords = /* @__PURE__ */ new Set();
+  const remember = (answer) => {
+    for (let i = 0; i + 1 < answer.length; i++) {
+      const w = answer[i] + answer[i + 1];
+      recentWords.delete(w);
+      recentWords.add(w);
     }
-    const ms = ((performance.now() - t0) / N).toFixed(1);
-    console.log(`cat=${cat} L${cfg.level}\u2605${cfg.star} n=${cfg.n}: ${ms}ms/\u554F unique=${uniq.size}/${N} hintOk=${hintOk}/${N}`);
+    const cap = Math.max(15, Math.min(60, Math.floor(availableWordCount(dict, cat) / 3)));
+    while (recentWords.size > cap) recentWords.delete(recentWords.values().next().value);
+  };
+  let seed = 1e3 + cat;
+  for (let r = 0; r < RUNS; r++) {
+    const seenInRun = /* @__PURE__ */ new Set();
+    for (let lv = 1; lv <= 5; lv++) {
+      const p = generatePuzzle(dict, cat, levelConfig(lv, 1), seed++, recentKeys, recentWords, seenInRun);
+      const words = [];
+      for (let i = 0; i + 1 < p.answer.length; i++) words.push(p.answer[i] + p.answer[i + 1]);
+      for (const w of words) {
+        totalWords++;
+        if (seenInRun.has(w)) repeatsInRun++;
+        if (recentWords.has(w)) repeatsRecent++;
+        seenInRun.add(w);
+      }
+      recentKeys.add(p.answer.join(""));
+      remember(p.answer);
+    }
   }
+  console.log(`cat=${cat}: \u719F\u8A9E${totalWords}\u500B\u4E2D\u3001\u540C\u30585\u554F\u30BB\u30C3\u30C8\u5185\u306E\u91CD\u8907=${repeatsInRun} (${(100 * repeatsInRun / totalWords).toFixed(1)}%)\u3001\u76F4\u8FD160\u8A9E\u3068\u306E\u91CD\u8907=${repeatsRecent} (${(100 * repeatsRecent / totalWords).toFixed(1)}%)`);
 }
-for (const cat of [1, 3, 8]) {
-  const p = generatePuzzle(dict, cat, levelConfig(5, 1), 42);
-  console.log(`\u4F8B cat=${cat}: ${p.answer.join("\u2192")}  tiles=[${p.tiles.join(" ")}]`);
-}
-console.log("fails", fails, "shortened", shortened);
