@@ -2,7 +2,7 @@ import { sfx } from '../audio';
 import { track } from '../analytics';
 import { h } from './dom';
 
-export const SITE_URL = 'https://kenichi-sketch.github.io/pan-shiritori/';
+export const SITE_URL = 'https://shiritori.ak-base.com/';
 const SHARE_TEXT = '漢字の熟語をつなぐ「パンしりとり」。小学生向けの漢字あそびアプリです。';
 
 /** ともだちに教える（QR・URL・コピー・LINE・共有） */
