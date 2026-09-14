@@ -112,7 +112,8 @@ export function mountParent(root: HTMLElement, dict: Dictionary, current: Profil
         `収録熟語 ${dict.words.size} 語。漢字の学年は文部科学省の学年別漢字配当表（KANJIDIC2 経由）、熟語と読みは JMdict を元に、子ども向けに選別しています。`, h('br'),
         'JMdict / KANJIDIC2 は ', h('a', { href: 'https://www.edrdg.org/', target: '_blank', rel: 'noopener' }, 'Electronic Dictionary Research and Development Group'), ' の著作物で、',
         h('a', { href: 'https://www.edrdg.org/edrdg/licence.html', target: '_blank', rel: 'noopener' }, 'CC BY-SA 4.0'), ' に基づき利用しています。', h('br'),
-        'キャラクター「パンの申し子」は ', h('a', { href: PANURANAI_URL, target: '_blank', rel: 'noopener' }, 'パン占い'), ' より。'),
+        'キャラクター「パンの申し子」は ', h('a', { href: PANURANAI_URL, target: '_blank', rel: 'noopener' }, 'パン占い'), ' より。', h('br'),
+        '作った経緯は ', h('a', { href: 'https://note.com/mare_inc/n/nf1997b4e2f0f', target: '_blank', rel: 'noopener' }, 'note の記事'), ' に書いています。'),
     ),
   ));
 }
