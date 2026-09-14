@@ -21,7 +21,8 @@ export interface WordInfo {
 export type Category = 1 | 2 | 3 | 4 | 5 | 6 | 8;
 export const CATEGORIES: Category[] = [1, 2, 3, 4, 5, 6, 8];
 export const CATEGORY_LABEL: Record<Category, string> = {
-  1: 'しょう1', 2: 'しょう2', 3: 'しょう3', 4: 'しょう4', 5: 'しょう5', 6: 'しょう6', 8: 'ちゅうがく',
+  // 子ども向け画面のカテゴリ名。ひらがなだと長くて画面に収まりにくいので漢字に（2026-09-15 有澤さん指示）
+  1: '小1', 2: '小2', 3: '小3', 4: '小4', 5: '小5', 6: '小6', 8: '中学',
 };
 export const CATEGORY_LABEL_KANJI: Record<Category, string> = {
   1: '小1まで', 2: '小2まで', 3: '小3まで', 4: '小4まで', 5: '小5まで', 6: '小6まで', 8: '中3まで',
