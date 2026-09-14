@@ -53,6 +53,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   let placed: string[] = [];
   let tray: { k: string; used: boolean; el: HTMLElement }[] = [];
   let usedHint = false;
+  let hintCount = 0;       // その問題でヒントを押した回数（スコアアタックで1回ごとに減点）
   let solvedCount = 0;
   let scoreTotal = 0;
   let scoreHints = 0;
@@ -119,7 +120,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     for (let i = 0; i + 1 < puzzle.answer.length; i++) runWords.add(puzzle.answer[i] + puzzle.answer[i + 1]);
     if (recentKeys.size > 200) recentKeys.delete(recentKeys.values().next().value as string);
     placed = puzzle.first ? [puzzle.first] : [];
-    usedHint = false;
+    usedHint = false; hintCount = 0;
     puzzleStart = performance.now();
     renderTray();
     renderChain();
@@ -271,7 +272,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     if (finished) return;
     const remaining = tray.filter((t) => !t.used).map((t) => t.k);
     const r = findHint(dict, placed, remaining, puzzle.cfg.n);
-    usedHint = true;
+    usedHint = true; hintCount++;
     sfx.hint();
     character.mood('think', 1500);
     if (r.tile) {
@@ -313,7 +314,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     solvedCount++;
     let ps: ReturnType<typeof puzzleScore> | null = null;
     if (opt.mode === 'score') {
-      ps = puzzleScore(words.length, ms, usedHint);
+      ps = puzzleScore(words.length, ms, hintCount);
       scoreTotal += ps.total;
       if (usedHint) scoreHints++;
     }
@@ -351,7 +352,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
           ps ? h('div', { class: 'stat', style: { marginTop: '6px' } }, '🏅 ', h('span', { class: 'num' }, `+${ps.total}`), ' てん') : null,
         ),
       ),
-      ps ? h('div', { class: 'sub center' }, `ことば${words.length}つ ${ps.base}てん ＋ はやさ ${ps.timeBonus}てん ＋ ヒントなし ${ps.hintBonus}てん（${fmtTime(ms)}）`) : null,
+      ps ? h('div', { class: 'sub center' }, `ことば${words.length}つ ${ps.base}てん ＋ はやさ ${ps.timeBonus}てん ${ps.hintBonus >= 0 ? `＋ ヒントなし ${ps.hintBonus}てん` : `− ヒント${hintCount}かい ${-ps.hintBonus}てん`}（${fmtTime(ms)}）`) : null,
       list,
       ...notices,
       h('div', { class: 'row', style: { justifyContent: 'center', marginTop: '10px' } },

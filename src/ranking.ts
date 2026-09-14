@@ -16,19 +16,22 @@ export interface RankEntry {
 
 const KEY = 'panshiri.ranking.v2';
 
-/** 1問あたりの得点。熟語1つ10点 + 速さボーナス + ヒントなしボーナス */
+/** 1問あたりの得点。熟語1つ10点 + 速さボーナス + ヒントなし10点（ヒントを使うと1回ごとに5点減点） */
 export const POINTS_PER_WORD = 10;
 export const NO_HINT_BONUS = 10;
 export const PAR_SEC_PER_WORD = 8;      // この秒数×熟語数より速ければボーナス
 export const BONUS_PER_SEC = 2;
 export const MAX_TIME_BONUS_PER_WORD = 6; // 速さボーナスの上限（熟語1つあたり）
 
-export function puzzleScore(wordCount: number, ms: number, usedHint: boolean): { total: number; base: number; timeBonus: number; hintBonus: number } {
+export const HINT_PENALTY = 5;           // ヒント1回ごとの減点（2026-09-15 有澤さん提案）
+
+/** hints＝その問題でヒントを押した回数。0回なら＋10、1回以上は1回ごとに−5（その問題の得点は0を下回らない） */
+export function puzzleScore(wordCount: number, ms: number, hints: number): { total: number; base: number; timeBonus: number; hintBonus: number } {
   const base = wordCount * POINTS_PER_WORD;
   const par = wordCount * PAR_SEC_PER_WORD;
   const saved = Math.max(0, par - ms / 1000);
   const timeBonus = Math.min(wordCount * MAX_TIME_BONUS_PER_WORD, Math.round(saved * BONUS_PER_SEC));
-  const hintBonus = usedHint ? 0 : NO_HINT_BONUS;
+  const hintBonus = hints <= 0 ? NO_HINT_BONUS : -Math.min(hints * HINT_PENALTY, base + timeBonus);
   return { total: base + timeBonus + hintBonus, base, timeBonus, hintBonus };
 }
 
