@@ -169,8 +169,12 @@ export function touchPlay(p: Profile): void {
 }
 
 // ---- アプリ全体設定（報告先URLなど） ----
+/** 既定の報告先（有澤さんの Google Apps Script）。親メニューで上書き可能 */
+export const DEFAULT_REPORT_URL = 'https://script.google.com/macros/s/AKfycbyivh6Yj3_qjcLyZXZ_tOU1IHzr-FWu9cUOU52Sg3KVYxLCNJ_rEYN-TFf0KRt2lG0ZBg/exec';
 export function loadSettings(): AppSettings {
-  return load<AppSettings>(KEY_SETTINGS, { reportUrl: '', reports: [] });
+  const s = load<AppSettings>(KEY_SETTINGS, { reportUrl: DEFAULT_REPORT_URL, reports: [] });
+  if (!s.reportUrl) s.reportUrl = DEFAULT_REPORT_URL;
+  return s;
 }
 export function saveSettings(s: AppSettings): void {
   save(KEY_SETTINGS, s);
