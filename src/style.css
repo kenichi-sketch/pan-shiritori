@@ -280,6 +280,7 @@ img { -webkit-user-drag: none; }
   .word-item .mn { font-size: 0.85rem; }
   .word-item .flag { font-size: 0.78rem; padding: 3px 8px; }
   .stat { padding: 6px 10px; font-size: 0.95rem; }
+  .home-actions .btn { white-space: normal; line-height: 1.25; font-size: 0.95rem; }   /* 「スコアアタック（レベル1〜5 とおし）」が切れないように */
 }
 
 /* ---------- 検索向けの説明文（画面の下・2026-09-15） ---------- */
