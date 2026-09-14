@@ -53,6 +53,7 @@ export interface Profile {
   birth: string;              // YYYY-MM-DD
   bread: string;              // 001..033
   manualCap: Category | null; // 親が設定した上限（null なら自動）
+  unlockAll?: boolean;        // 親設定: レベル1〜5をすべて開く（上の学年の子向け）
   progress: Progress;
   settings: { furigana: boolean; sound: boolean; speech: boolean };
   createdAt: string;

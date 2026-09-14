@@ -119,6 +119,7 @@ export const CLEARS_TO_UNLOCK = 3;
 export const L5_CLEARS_PER_STAR = 5;
 
 export function maxUnlockedLevel(p: Profile): number {
+  if (p.unlockAll) return 5;
   let lv = 1;
   while (lv < 5 && (p.progress.clears[lv] ?? 0) >= CLEARS_TO_UNLOCK) lv++;
   return lv;

@@ -20,6 +20,8 @@ export interface PlayOptions {
   level: number;
   mode: PlayMode;
   count?: number; // score モードの問数
+  /** スクリーンショット用: 想定解を自動で並べてクリア画面まで進める */
+  autoSolve?: boolean;
   onExit: () => void;
 }
 
@@ -416,6 +418,11 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
 
   newPuzzle();
   if (opt.mode === 'score') startTimer();
+  if (opt.autoSolve) {
+    // 800ms ごとに想定解を1枚ずつ置く（デモ・撮影用）
+    const rest = puzzle.answer.slice(puzzle.first ? 1 : 0);
+    rest.forEach((k, i) => window.setTimeout(() => onTrayTap(k), 800 * (i + 1)));
+  }
   return () => { stopTimer(); character.destroy(); };
 }
 

@@ -60,6 +60,7 @@ export function mountParent(root: HTMLElement, dict: Dictionary, current: Profil
       ),
       bests.length ? h('div', { style: { marginTop: '8px' } }, h('strong', null, 'スコアアタック最高点: '), bests.map((b) => `${CATEGORY_LABEL_KANJI[b.cat]} ${b.level === 0 ? 'L1〜5通し' : `L${b.level} ${b.count}問`} ${b.score}点`).join(' ／ ')) : null,
       h('div', { class: 'row', style: { marginTop: '10px' } }, h('span', null, '出題範囲の上限'), capSel),
+      toggle('レベル1〜5をすべて開く（簡単すぎる子向け）', () => !!p.unlockAll, (v) => { p.unlockAll = v; saveProfile(p); }),
       toggle('タイルにふりがなを表示', () => p.settings.furigana, (v) => { p.settings.furigana = v; saveProfile(p); }),
       toggle('効果音', () => p.settings.sound, (v) => { p.settings.sound = v; saveProfile(p); if (p.id === current.id) setSoundEnabled(v); }),
       toggle('読み上げ', () => p.settings.speech, (v) => { p.settings.speech = v; saveProfile(p); if (p.id === current.id) setSpeechEnabled(v); }),

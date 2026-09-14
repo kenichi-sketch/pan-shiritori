@@ -1,7 +1,7 @@
 import './style.css';
 import { registerSW } from 'virtual:pwa-register';
 import { loadDictionary, type Dictionary } from './data';
-import { currentProfile, listProfiles } from './profile';
+import { createProfile, currentProfile, listProfiles, saveProfile, setCurrentProfile, todayStr } from './profile';
 import { setSoundEnabled, setSpeechEnabled } from './audio';
 import type { Category, Profile } from './types';
 import { clear, h } from './ui/dom';
@@ -80,6 +80,23 @@ async function boot(): Promise<void> {
     console.error(e);
     return;
   }
+  // 撮影・デモ用: ?demo=home|play|clear で、デモ用プロフィールを作って該当画面を開く
+  const demo = new URLSearchParams(location.search).get('demo');
+  if (demo) {
+    let p = listProfiles().find((x) => x.name === 'ぱん' && x.birth === '2019-04-02');
+    if (!p) {
+      p = createProfile('ぱん', '2019-04-02');
+      p.progress.stamps = 12; p.progress.streak = 3; p.progress.clears = { 1: 3, 2: 3, 3: 2 };
+      for (const w of ['学校', '校長', '長女', '天気', '気力', '花火', '青空', '大人']) p.progress.collected[w] = todayStr();
+      saveProfile(p);
+    }
+    setCurrentProfile(p.id);
+    applySettings(p);
+    if (demo === 'play') return showPlay(p, 1, 3, 'normal');
+    if (demo === 'clear') return go(() => mountPlay(app, { dict, profile: p, cat: 1, level: 3, mode: 'normal', autoSolve: true, onExit: () => showHome(p) }));
+    return showHome(p);
+  }
+
   const cur = currentProfile();
   if (cur) { applySettings(cur); showHome(cur); }
   else if (listProfiles().length) showProfiles();
