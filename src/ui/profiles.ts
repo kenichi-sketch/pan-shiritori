@@ -75,6 +75,10 @@ export function mountNewProfile(root: HTMLElement, onDone: (p: Profile) => void,
       h('button', { class: 'icon-btn', onClick: onCancel, 'aria-label': 'もどる' }, '←'),
       h('h1', { class: 'title' }, edit ? 'プロフィールを なおす' : 'プロフィールを つくる'),
     ),
+    // 何のために入れるのかが分かるように一言（2026-09-15 有澤さん指摘）
+    h('p', { class: 'sub', style: { margin: '0 0 10px' } },
+      edit ? 'なおすと、がくねんと あいぼうの パンも かわることが あります。'
+           : 'なまえと たんじょうびを いれると、がくねんに あった かんじが でて、あいぼうの パンが きまるよ。あとから 「おうちのひと メニュー」で なおせます。'),
     h('div', { class: 'form card' },
       h('label', null, 'なまえ', nameInput),
       h('label', null, 'たんじょうび（がくねんと あいぼうの パンが きまるよ）',
