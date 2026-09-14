@@ -1,6 +1,7 @@
 import { sfx } from '../audio';
 import { track } from '../analytics';
 import { h } from './dom';
+import { installBlock } from './install';
 
 export const SITE_URL = 'https://shiritori.ak-base.com/';
 const SHARE_TEXT = '漢字の熟語をつなぐ「パンしりとり」。小学生向けの漢字あそびアプリです。';
@@ -27,6 +28,7 @@ export function openShareModal(): void {
         } }, '📤 ほかの アプリで') : null,
       ),
       msg,
+      installBlock(),
       h('div', { style: { marginTop: '12px' } }, h('button', { class: 'btn ghost small', onClick: () => overlay.remove() }, 'とじる')),
     ),
   );

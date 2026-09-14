@@ -292,3 +292,9 @@ img { -webkit-user-drag: none; }
 .about h1 { font-size: 1rem; margin: 0 0 8px; color: var(--ink); }
 .about p { margin: 0 0 8px; }
 .about a { color: var(--ink-soft); }
+
+/* ---------- ホーム画面に追加の案内（2026-09-15） ---------- */
+.install-block { margin: 12px auto 0; padding: 10px 12px; background: #fff; border-radius: 14px; text-align: left; max-width: 420px; }
+.install-title { font-weight: 900; margin-bottom: 6px; text-align: center; }
+.install-steps { display: grid; gap: 4px; font-size: 0.95rem; }
+.install-steps b { color: var(--accent-dark); }
