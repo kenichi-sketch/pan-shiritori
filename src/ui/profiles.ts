@@ -4,6 +4,7 @@ import type { Profile } from '../types';
 import { sfx } from '../audio';
 import { Character } from './character';
 import { clear, h } from './dom';
+import { openShareModal } from './share';
 
 export function mountProfiles(root: HTMLElement, onSelect: (p: Profile) => void, onNew: () => void): void {
   const profiles = listProfiles();
@@ -22,6 +23,7 @@ export function mountProfiles(root: HTMLElement, onSelect: (p: Profile) => void,
     grid,
     h('div', { class: 'home-footer' },
       h('span', { class: 'credit' }, 'キャラクターは ', h('a', { href: PANURANAI_URL, target: '_blank', rel: 'noopener' }, 'パン占い'), ' の「パンの申し子」たち'),
+      h('button', { class: 'btn ghost small', onClick: () => { sfx.tap(); openShareModal(); } }, '👫 ともだちに おしえる（QR・URL）'),
     ),
   ));
 }

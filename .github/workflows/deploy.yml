@@ -28,6 +28,7 @@ jobs:
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
           VITE_REPORT_URL: ${{ secrets.REPORT_URL }}
+          VITE_GA_ID: ${{ secrets.GA_ID }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -10,8 +10,10 @@ import { mountNewProfile, mountProfiles } from './ui/profiles';
 import { mountPlay, type PlayMode } from './ui/play';
 import { mountZukan } from './ui/zukan';
 import { mountParent, mountParentGate } from './ui/parent';
+import { initAnalytics, trackScreen } from './analytics';
 
 registerSW({ immediate: true });
+initAnalytics();
 
 const app = document.getElementById('app')!;
 let dict: Dictionary;
@@ -30,25 +32,29 @@ function applySettings(p: Profile): void {
 }
 
 function showProfiles(): void {
+  trackScreen('profiles');
   go(() => mountProfiles(app, (p) => { applySettings(p); showHome(p); }, () => showNewProfile()));
 }
 
 function showNewProfile(edit?: Profile): void {
+  trackScreen(edit ? 'edit_profile' : 'new_profile');
   go(() => mountNewProfile(app, (p) => { applySettings(p); showHome(p); }, () => (edit ? showParent(edit) : showProfiles()), edit));
 }
 
 function showHome(p: Profile): void {
+  trackScreen('home');
   go(() => mountHome(app, dict, p, {
     play: (cat, level) => showPlay(p, cat, level, 'normal'),
     daily: (cat, level) => showPlay(p, cat, level, 'daily'),
     score: (cat, level, count) => showPlay(p, cat, level, 'score', count),
-    zukan: () => go(() => mountZukan(app, dict, p, () => showHome(p))),
+    zukan: () => { trackScreen('zukan'); go(() => mountZukan(app, dict, p, () => showHome(p))); },
     parent: () => go(() => mountParentGate(app, () => showParent(p), () => showHome(p))),
     switchProfile: () => showProfiles(),
   }));
 }
 
 function showParent(p: Profile): void {
+  trackScreen('parent');
   go(() => mountParent(app, dict, p, {
     back: () => showHome(p),
     editProfile: (target) => showNewProfile(target),
@@ -57,6 +63,7 @@ function showParent(p: Profile): void {
 }
 
 function showPlay(p: Profile, cat: Category, level: number, mode: PlayMode, count?: number): void {
+  trackScreen('play', { mode, cat, level });
   go(() => mountPlay(app, { dict, profile: p, cat, level, mode, count, onExit: () => showHome(p) }));
 }
 

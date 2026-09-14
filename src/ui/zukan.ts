@@ -1,5 +1,5 @@
 import { Dictionary } from '../data';
-import { availableCategories } from '../profile';
+import { availableCategories, reportWord, schoolGrade } from '../profile';
 import { speak, sfx } from '../audio';
 import type { Category, Profile } from '../types';
 import { CATEGORY_LABEL } from '../types';
@@ -39,7 +39,13 @@ export function mountZukan(root: HTMLElement, dict: Dictionary, p: Profile, onBa
     for (const { info } of collected) {
       if (!info) continue;
       gridEl.appendChild(h('div', { class: 'zukan-item', onClick: () => speak(info.r) },
-        h('div', { class: 'w' }, info.w), h('div', { class: 'rd' }, info.r), info.m ? h('div', { class: 'mn' }, info.m) : null));
+        h('div', { class: 'w' }, info.w), h('div', { class: 'rd' }, info.r), info.m ? h('div', { class: 'mn' }, info.m) : null,
+        h('button', { class: 'flag small-flag', onClick: async (e: Event) => {
+          e.stopPropagation();
+          const btn = e.currentTarget as HTMLButtonElement; btn.disabled = true; btn.textContent = '…';
+          await reportWord({ word: info.w, reading: info.r, cat, grade: schoolGrade(p.birth) });
+          btn.textContent = '✓';
+        } }, '🚩 へん？')));
     }
   }
   render();

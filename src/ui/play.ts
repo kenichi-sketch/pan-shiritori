@@ -9,6 +9,7 @@ import type { Category, Profile, Puzzle, WordInfo } from '../types';
 import { CATEGORY_LABEL } from '../types';
 import { Character, confetti } from './character';
 import { clear, h, wait } from './dom';
+import { track } from '../analytics';
 
 export type PlayMode = 'normal' | 'daily' | 'score';
 
@@ -72,7 +73,23 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   clear(root); root.appendChild(screen);
   touchPlay(profile);
 
-  function say(text: string): void { bubble.textContent = text; }
+  function say(text: string, word?: WordInfo): void {
+    clear(bubble);
+    bubble.appendChild(document.createTextNode(text));
+    if (word) bubble.appendChild(reportButton(word, '🚩 へん？'));
+  }
+
+  /** 「へんなことば」申告ボタン。押すと送信して ✓ に変わる */
+  function reportButton(w: WordInfo, label = '🚩 へんなことば？'): HTMLElement {
+    return h('button', { class: 'flag', title: 'おかしいと おもったら おしてね', onClick: async (e: Event) => {
+      e.stopPropagation();
+      const btn = e.currentTarget as HTMLButtonElement;
+      btn.disabled = true; btn.textContent = '…';
+      await reportWord({ word: w.w, reading: w.r, cat: opt.cat, grade: schoolGrade(profile.birth) });
+      btn.textContent = '✓ つたえたよ';
+      track('report_word', { word: w.w, cat: opt.cat });
+    } }, label);
+  }
 
   function newPuzzle(): void {
     if (opt.mode === 'score') currentLevel = SCORE_LEVELS[Math.min(solvedCount, SCORE_LEVELS.length - 1)];
@@ -158,7 +175,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     renderChain();
     if (last !== undefined) {
       const w = dict.word(last, k);
-      if (w) { say(`「${w.w}」（${w.r}）できた！`); speak(w.r); character.mood('happy', 800); }
+      if (w) { say(`「${w.w}」（${w.r}）できた！`, w); speak(w.r); character.mood('happy', 800); }
     } else {
       say(`「${k}」から スタート！つぎは？`);
     }
@@ -224,6 +241,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     character.mood('dance', 0);
     say('できた！すごい！');
     const result = recordClear(profile, opt.cat, currentLevel, words.map((w) => w.w), usedHint);
+    track('puzzle_clear', { mode: opt.mode, cat: opt.cat, level: currentLevel, hint: usedHint, ms: Math.round(ms) });
     if (opt.mode === 'daily') { profile.progress.dailyDone = todayStr(); saveProfile(profile); }
     solvedCount++;
     let ps: ReturnType<typeof puzzleScore> | null = null;
@@ -244,13 +262,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
         h('span', { class: 'w' }, w.w),
         h('div', null, h('div', { class: 'rd' }, w.r), w.m ? h('div', { class: 'mn' }, w.m) : null),
         result.newWords.includes(w.w) ? h('span', { class: 'new' }, 'NEW') : null,
-        h('button', { class: 'flag', title: 'へんなことば？', onClick: async (e: Event) => {
-          e.stopPropagation();
-          const btn = e.currentTarget as HTMLButtonElement;
-          btn.disabled = true; btn.textContent = '…';
-          await reportWord({ word: w.w, reading: w.r, cat: opt.cat, grade: schoolGrade(profile.birth) });
-          btn.textContent = '✓';
-        } }, '🚩'),
+        reportButton(w),
       );
       list.appendChild(item);
     }
@@ -306,6 +318,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     const prevBest = bestFor(profile.id, opt.cat, 0, totalCount);
     const isBest = !prevBest || scoreTotal > prevBest.score;
     const rank = addRecord(entry);
+    track('score_attack_done', { cat: opt.cat, score: scoreTotal, ms: Math.round(elapsedBefore), best: isBest });
     const ranking = rankingFor(opt.cat, 0, totalCount).slice(0, 10);
     const modalChar = new Character(profile.bread, 150);
     modalChar.mood(isBest ? 'dance' : 'happy', 0);

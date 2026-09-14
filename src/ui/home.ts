@@ -7,6 +7,7 @@ import type { Category, Profile } from '../types';
 import { CATEGORIES, CATEGORY_LABEL } from '../types';
 import { Character } from './character';
 import { clear, h } from './dom';
+import { openShareModal } from './share';
 
 export interface HomeActions {
   play: (cat: Category, level: number) => void;
@@ -129,7 +130,7 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
     ),
     best ? h('p', { class: 'sub center', style: { margin: '6px 0 0' } }, `スコアアタック さいこうてん（${CATEGORY_LABEL[cat]}）: ${best.score}てん ／ ${fmtTime(best.ms)}`) : null,
     h('div', { class: 'home-footer' },
-      h('div', { class: 'row' }, uranaiForm),
+      h('div', { class: 'row' }, uranaiForm, h('button', { class: 'btn ghost small', onClick: () => { sfx.tap(); openShareModal(); } }, '👫 ともだちに おしえる')),
       h('button', { class: 'small-link', onClick: () => { sfx.tap(); act.parent(); } }, 'おうちのひと メニュー'),
     ),
   ));

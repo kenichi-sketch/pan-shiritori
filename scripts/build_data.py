@@ -74,6 +74,8 @@ def read_jsonl(pattern):
 
 tags = read_jsonl(os.path.join(WORK, 'tags', '*.jsonl'))
 fixes = read_jsonl(os.path.join(WORK, 'fix', '*.jsonl'))
+# 厳しい基準での再判定（小学カテゴリの全語）。あればこちらの k を優先
+rechecks = read_jsonl(os.path.join(WORK, 'recheck', '*.jsonl'))
 override_path = os.path.join(WORK, 'overrides.json')
 overrides = json.load(open(override_path, encoding='utf-8')) if os.path.exists(override_path) else {}
 
@@ -85,6 +87,9 @@ for w, v in cand.items():
     if t is None:
         untagged += 1; continue
     k = t.get('k', 0) if isinstance(t.get('k'), int) else 0
+    if w in rechecks and isinstance(rechecks[w].get('k'), int):
+        if rechecks[w]['k'] != k: rule_hits['recheck_changed'] += 1
+        k = rechecks[w]['k']
     m = t.get('m', '') or ''
     if w in fixes and fixes[w].get('m'): m = fixes[w]['m']
     # ルール
