@@ -180,7 +180,7 @@ img { -webkit-user-drag: none; }
 .slot.fixed { border-color: var(--green); background: #e6f4f1; }
 .slot.bad { border-color: var(--accent-dark); animation: shake 0.4s; }
 .slot.next { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(142, 202, 230, 0.4); }
-.joint { display: grid; place-items: center; align-self: center; width: 26px; height: var(--tile-size); font-size: 1.2rem; color: var(--ink-soft); position: relative; }
+.joint { display: grid; place-items: center; align-self: center; width: var(--joint-w, 26px); height: var(--tile-size); font-size: 1.2rem; color: var(--ink-soft); position: relative; }
 .joint.ok { color: var(--green); }
 .joint .word-read { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 0.85rem; color: var(--green); font-weight: 700; background: #fff; padding: 1px 8px; border-radius: 999px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); animation: fadein 0.3s; }
 @keyframes fadein { from { opacity: 0; transform: translate(-50%, 6px); } to { opacity: 1; transform: translate(-50%, 0); } }
@@ -207,12 +207,13 @@ img { -webkit-user-drag: none; }
 .play-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 
 /* オーバーレイ */
-.overlay { position: fixed; inset: 0; background: rgba(74, 59, 42, 0.45); display: grid; place-items: center; padding: 16px; z-index: 50; animation: fadein2 0.25s; overflow: auto; }
+.overlay { position: fixed; inset: 0; background: rgba(74, 59, 42, 0.45); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 16px; z-index: 50; animation: fadein2 0.25s; overflow: auto; }
 @keyframes fadein2 { from { opacity: 0; } to { opacity: 1; } }
-.modal { background: var(--bg); border-radius: 24px; padding: 20px; width: min(680px, 100%); box-shadow: 0 10px 40px rgba(0,0,0,0.25); position: relative; overflow: hidden; }
+.modal { background: var(--bg); border-radius: 24px; padding: 20px; width: min(680px, 100%); margin: auto 0; flex: none; box-shadow: 0 10px 40px rgba(0,0,0,0.25); position: relative; overflow: hidden; }
 .modal h2 { margin: 0 0 8px; font-size: 1.6rem; text-align: center; color: var(--accent-dark); }
 .word-list { display: grid; gap: 8px; margin: 12px 0; }
-.word-item { background: #fff; border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; }
+.word-item { background: #fff; border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.word-item > div { flex: 1 1 140px; min-width: 0; }
 .word-item .w { font-size: 1.6rem; font-weight: 900; min-width: 3.2em; }
 .word-item .rd { color: var(--green); font-weight: 700; }
 .word-item .mn { color: var(--ink-soft); font-size: 0.9rem; }
@@ -254,3 +255,29 @@ img { -webkit-user-drag: none; }
 @media (max-width: 700px) { :root { --tile-size: 64px; } body { font-size: 16px; } .levels { grid-template-columns: repeat(5, 1fr); gap: 6px; } .level-btn { min-height: 96px; padding: 10px 4px 8px; } .level-btn .n { font-size: 1.6rem; } .home-hero .char { width: 100px !important; height: 100px !important; } }
 @media (max-width: 480px) { :root { --tile-size: 56px; } .level-btn .desc { display: none; } }
 @media (min-width: 1000px) { :root { --tile-size: 96px; } }
+
+/* ---------- スマホ（2026-09-15：名前入力・遊ぶ画面・クリア画面の崩れを直す） ---------- */
+@media (max-width: 480px) {
+  :root { --joint-w: 18px; }
+  .screen { padding-left: 12px; padding-right: 12px; }
+  .title { font-size: 1.15rem; }
+  .card { padding: 14px 12px; }
+  .form { gap: 10px; }
+  .form label { font-size: 0.95rem; }
+  .form input, .form select { font-size: 1rem; padding: 10px 8px; }
+  .form .date-row { grid-template-columns: 1.5fr 1fr 1fr; gap: 6px; }
+  .btn.big { font-size: 1.15rem; min-height: 54px; padding: 12px 20px; }
+  .reveal .char { width: min(220px, 50vw) !important; height: min(220px, 50vw) !important; }
+  .play-bottom .char { width: 96px !important; height: 96px !important; }
+  .joint { font-size: 1rem; }
+  .joint .word-read { font-size: 0.7rem; top: -22px; padding: 1px 6px; }
+  .chain { gap: 6px; padding: 12px 6px 6px; }
+  .modal { padding: 14px 12px; border-radius: 18px; }
+  .modal h2 { font-size: 1.3rem; }
+  .word-item { padding: 8px 10px; gap: 8px; }
+  .word-item .w { font-size: 1.35rem; min-width: 2.4em; }
+  .word-item .rd { font-size: 0.95rem; }
+  .word-item .mn { font-size: 0.85rem; }
+  .word-item .flag { font-size: 0.78rem; padding: 3px 8px; }
+  .stat { padding: 6px 10px; font-size: 0.95rem; }
+}

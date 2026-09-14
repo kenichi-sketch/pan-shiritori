@@ -162,9 +162,37 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     });
   }
 
+  /** スマホ幅でマスが不ぞろいに折り返さないように、マスの大きさと1行のマス数を決める（2026-09-15） */
+  function fitChain(n: number): void {
+    const cs = getComputedStyle(screen);
+    const base = parseFloat(cs.getPropertyValue('--tile-size')) || 64;
+    const joint = parseFloat(cs.getPropertyValue('--joint-w')) || 26;
+    const gap = 6;
+    const avail = Math.max(200, (chainEl.clientWidth || screen.clientWidth - 32) - 12);
+    let rows = 1; let perRow = n; let size = base;
+    for (rows = 1; rows <= 3; rows++) {
+      perRow = Math.ceil(n / rows);
+      size = Math.min(base, Math.floor((avail - (perRow - 1) * (joint + gap * 2)) / perRow));
+      if (size >= 40 || rows === 3) break;   // 40px あれば1行に並べる（漢字 20px・スマホで読める）
+    }
+    screen.style.setProperty('--tile-size', `${Math.max(40, size)}px`);
+    if (rows > 1) {
+      // 1行のマス数を固定し、行末の「▶」も同じ行に収める（幅＝マス×perRow＋つなぎ×perRow＋すき間）
+      chainEl.style.width = `${perRow * size + perRow * joint + (2 * perRow - 1) * gap + 2}px`;
+      chainEl.style.maxWidth = '100%';
+      chainEl.style.justifyContent = 'flex-start';
+      chainEl.style.margin = '0 auto';
+    } else {
+      chainEl.style.width = ''; chainEl.style.maxWidth = ''; chainEl.style.justifyContent = ''; chainEl.style.margin = '';
+    }
+  }
+  const onResize = (): void => { if (root.contains(screen)) renderChain(); else window.removeEventListener('resize', onResize); };
+  window.addEventListener('resize', onResize);
+
   function renderChain(): void {
     clear(chainEl);
     const n = puzzle.cfg.n;
+    fitChain(n);
     for (let i = 0; i < n; i++) {
       if (i > 0) {
         const ok = i < placed.length;
