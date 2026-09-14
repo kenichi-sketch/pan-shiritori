@@ -88,9 +88,9 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
   const scoreBtn = h('button', { class: 'btn blue', onClick: () => { sfx.tap(); act.score(cat, 0, 5); } }, '🏅 スコアアタック（レベル1〜5 とおし）');
   const best = bestFor(p.id, cat, 0, 5);
 
-  // パン占いへ（生年月日を POST して結果ページを開く）
+  // パン占いへ（生年月日を POST して結果ページを開く）。新しいタブだと GET に化ける環境があるので同じタブで開く
   const [by, bm, bd] = p.birth.split('-');
-  const uranaiForm = h('form', { method: 'POST', action: `${PANURANAI_URL}/diagnose`, target: '_blank', style: { display: 'inline' } },
+  const uranaiForm = h('form', { method: 'POST', action: `${PANURANAI_URL}/diagnose`, style: { display: 'inline' } },
     h('input', { type: 'hidden', name: 'year', value: by }),
     h('input', { type: 'hidden', name: 'month', value: String(Number(bm)) }),
     h('input', { type: 'hidden', name: 'day', value: String(Number(bd)) }),
