@@ -83,7 +83,7 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
     h('input', { type: 'hidden', name: 'year', value: by }),
     h('input', { type: 'hidden', name: 'month', value: String(Number(bm)) }),
     h('input', { type: 'hidden', name: 'day', value: String(Number(bd)) }),
-    h('button', { type: 'submit', class: 'btn ghost small' }, '🔮 きょうの うらない'),
+    h('button', { type: 'submit', class: 'btn ghost small' }, '🔮 きょうの うらない（パンうらないの けっかへ）'),
   );
 
   clear(root);
@@ -120,7 +120,7 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
       `さいこうてん（${CATEGORY_LABEL[cat]} レベル${maxLv}）: `,
       best5 ? `5もん ${best5.score}てん` : '', best5 && best10 ? ' ／ ' : '', best10 ? `10もん ${best10.score}てん` : '') : null,
     h('div', { class: 'home-footer' },
-      h('div', { class: 'row' }, uranaiForm, h('a', { href: PANURANAI_URL, target: '_blank', rel: 'noopener', class: 'small-link' }, 'パン占いへ')),
+      h('div', { class: 'row' }, uranaiForm),
       h('button', { class: 'small-link', onClick: () => { sfx.tap(); act.parent(); } }, 'おうちのひと メニュー'),
     ),
   ));
