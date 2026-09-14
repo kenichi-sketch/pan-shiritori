@@ -321,3 +321,7 @@ img { -webkit-user-drag: none; }
   .home-actions { grid-template-columns: 1fr; }   /* スコアアタックの文字が3行になっていた */
   .stats .stat { padding: 6px 10px; font-size: 0.9rem; }
 }
+
+/* 撮影用: ?demo=...&noanim=1 で全アニメーションを止める */
+.no-anim *, .no-anim *::before, .no-anim *::after { animation: none !important; transition: none !important; }
+.no-anim .confetti { display: none; }

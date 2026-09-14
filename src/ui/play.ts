@@ -22,6 +22,8 @@ export interface PlayOptions {
   count?: number; // score モードの問数
   /** スクリーンショット用: 想定解を自動で並べてクリア画面まで進める */
   autoSolve?: boolean;
+  /** 撮影用: 出題を固定するシード（毎回同じ問題にする） */
+  seed?: number;
   onExit: () => void;
 }
 
@@ -111,7 +113,8 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     cfg = levelConfig(currentLevel, currentLevel === 5 ? star : 1);
     showFurigana = cfg.furigana && profile.settings.furigana;
     levelBadge.textContent = `レベル${currentLevel}${currentLevel === 5 ? ' ' + '★'.repeat(star) : ''}`;
-    const seed = opt.mode === 'daily' ? hashString(`${todayStr()}|${opt.cat}|${opt.level}|${profile.birth}`) : randomSeed();
+    const seed = opt.seed !== undefined ? opt.seed + solvedCount
+      : opt.mode === 'daily' ? hashString(`${todayStr()}|${opt.cat}|${opt.level}|${profile.birth}`) : randomSeed();
     // 通常モードでは直前の問題の語、スコアアタックでは今回のセット全体の語を絶対に避ける
     if (opt.mode !== 'score' || solvedCount === 0) runWords.clear();
     puzzle = generatePuzzle(dict, opt.cat, cfg, seed, recentKeys, recentWords, runWords);

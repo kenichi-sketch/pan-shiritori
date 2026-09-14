@@ -83,6 +83,8 @@ async function boot(): Promise<void> {
   // 撮影・デモ用: ?demo=home|play|clear で、デモ用プロフィールを作って該当画面を開く
   const demo = new URLSearchParams(location.search).get('demo');
   if (demo) {
+    // 撮影ではアニメーションを止める（ヘッドレスのキャプチャでフェードが途中で止まって半透明に写るため）
+    if (new URLSearchParams(location.search).get('noanim')) document.body.classList.add('no-anim');
     let p = listProfiles().find((x) => x.name === 'ぱん' && x.birth === '2019-04-02');
     if (!p) {
       p = createProfile('ぱん', '2019-04-02');
@@ -92,8 +94,11 @@ async function boot(): Promise<void> {
     }
     setCurrentProfile(p.id);
     applySettings(p);
-    if (demo === 'play') return showPlay(p, 1, 3, 'normal');
-    if (demo === 'clear') return go(() => mountPlay(app, { dict, profile: p, cat: 1, level: 3, mode: 'normal', autoSolve: true, onExit: () => showHome(p) }));
+    const seedParam = new URLSearchParams(location.search).get('seed');
+    const seed = seedParam ? Number(seedParam) : undefined;
+    const lvParam = Number(new URLSearchParams(location.search).get('lv') || '3');
+    if (demo === 'play') return go(() => mountPlay(app, { dict, profile: p, cat: 1, level: lvParam, mode: 'normal', seed, onExit: () => showHome(p) }));
+    if (demo === 'clear') return go(() => mountPlay(app, { dict, profile: p, cat: 1, level: lvParam, mode: 'normal', autoSolve: true, seed, onExit: () => showHome(p) }));
     return showHome(p);
   }
 
