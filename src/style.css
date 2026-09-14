@@ -174,7 +174,8 @@ img { -webkit-user-drag: none; }
 .play { display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .play-head { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }   /* 入り切らない時は下の行へ（1文字ずつ縦に潰れない） */
 .badge { background: #fff; border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(120, 80, 30, 0.08); white-space: nowrap; flex: none; }
-.chain { display: flex; gap: 6px; align-items: flex-end; justify-content: center; flex-wrap: wrap; padding: 12px 6px 6px; min-height: calc(var(--tile-size) + 44px); }
+.chain { display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 12px 6px 6px; min-height: calc(var(--tile-size) + 44px); }
+.chain-row { display: flex; gap: 6px; align-items: flex-end; justify-content: center; }
 .slot { width: var(--tile-size); height: var(--tile-size); border-radius: 16px; border: 3px dashed var(--tile-border); background: rgba(255, 255, 255, 0.5); display: grid; place-items: center; position: relative; }
 .slot.filled { border-style: solid; border-color: var(--accent); background: var(--tile); }
 .slot.fixed { border-color: var(--green); background: #e6f4f1; }
@@ -272,6 +273,7 @@ img { -webkit-user-drag: none; }
   .joint { font-size: 1rem; }
   .joint .word-read { font-size: 0.7rem; top: -22px; padding: 1px 6px; }
   .chain { gap: 6px; padding: 12px 6px 6px; }
+  .chain-row { gap: 6px; }
   .modal { padding: 14px 12px; border-radius: 18px; }
   .modal h2 { font-size: 1.3rem; }
   .word-item { padding: 8px 10px; gap: 8px; }

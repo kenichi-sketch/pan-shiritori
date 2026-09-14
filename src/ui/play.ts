@@ -165,29 +165,25 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     });
   }
 
-  /** スマホ幅でマスが不ぞろいに折り返さないように、マスの大きさと1行のマス数を決める（2026-09-15） */
-  function fitChain(n: number): void {
+  /** スマホ幅でも読める大きさを保ち、1行に入らない時は行ごとのマス数をそろえる（2026-09-15）。
+   *  幅まかせの折り返しは端末の端数で崩れる（レベル4が3段になった）ので、行は明示的に組む。 */
+  function fitChain(n: number): { size: number; perRow: number } {
     const cs = getComputedStyle(screen);
-    const base = parseFloat(cs.getPropertyValue('--tile-size')) || 64;
+    // 基準の大きさは :root の値から読む（screen に前の問題で小さい値を入れていても元に戻せるように）
+    const base = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size')) || 64;
     const joint = parseFloat(cs.getPropertyValue('--joint-w')) || 26;
     const gap = 6;
     const avail = Math.max(200, (chainEl.clientWidth || screen.clientWidth - 32) - 12);
     let rows = 1; let perRow = n; let size = base;
     for (rows = 1; rows <= 3; rows++) {
       perRow = Math.ceil(n / rows);
-      size = Math.min(base, Math.floor((avail - (perRow - 1) * (joint + gap * 2)) / perRow));
+      // 1行＝マス×perRow ＋ つなぎ×perRow（行末の▶も同じ行）＋ すき間
+      size = Math.min(base, Math.floor((avail - perRow * joint - (2 * perRow - 1) * gap) / perRow));
       if (size >= 40 || rows === 3) break;   // 40px あれば1行に並べる（漢字 20px・スマホで読める）
     }
-    screen.style.setProperty('--tile-size', `${Math.max(40, size)}px`);
-    if (rows > 1) {
-      // 1行のマス数を固定し、行末の「▶」も同じ行に収める（幅＝マス×perRow＋つなぎ×perRow＋すき間）
-      chainEl.style.width = `${perRow * size + perRow * joint + (2 * perRow - 1) * gap + 2}px`;
-      chainEl.style.maxWidth = '100%';
-      chainEl.style.justifyContent = 'flex-start';
-      chainEl.style.margin = '0 auto';
-    } else {
-      chainEl.style.width = ''; chainEl.style.maxWidth = ''; chainEl.style.justifyContent = ''; chainEl.style.margin = '';
-    }
+    size = Math.max(40, size);
+    screen.style.setProperty('--tile-size', `${size}px`);
+    return { size, perRow };
   }
   const onResize = (): void => { if (root.contains(screen)) renderChain(); else window.removeEventListener('resize', onResize); };
   window.addEventListener('resize', onResize);
@@ -195,7 +191,9 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
   function renderChain(): void {
     clear(chainEl);
     const n = puzzle.cfg.n;
-    fitChain(n);
+    const { perRow } = fitChain(n);
+    let row = h('div', { class: 'chain-row' });
+    chainEl.appendChild(row);
     for (let i = 0; i < n; i++) {
       if (i > 0) {
         const ok = i < placed.length;
@@ -204,7 +202,8 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
           const w = dict.word(placed[i - 1], placed[i]);
           if (w) joint.appendChild(h('span', { class: 'word-read' }, w.r));
         }
-        chainEl.appendChild(joint);
+        row.appendChild(joint);            // 行末のつなぎは前の行の末尾に置く（次の行へ続く印）
+        if (i % perRow === 0) { row = h('div', { class: 'chain-row' }); chainEl.appendChild(row); }
       }
       const isFixed = i === 0 && !!puzzle.first;
       const slot = h('div', { class: `slot ${i < placed.length ? 'filled' : ''} ${isFixed ? 'fixed' : ''} ${i === placed.length ? 'next' : ''}` });
@@ -217,7 +216,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
         if (!isFixed) t.addEventListener('click', () => removeFrom(i));
         slot.appendChild(t);
       }
-      chainEl.appendChild(slot);
+      row.appendChild(slot);
     }
     undoBtn.disabled = placed.length <= (puzzle.first ? 1 : 0);
   }
