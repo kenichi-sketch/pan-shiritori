@@ -325,3 +325,9 @@ img { -webkit-user-drag: none; }
 /* 撮影用: ?demo=...&noanim=1 で全アニメーションを止める */
 .no-anim *, .no-anim *::before, .no-anim *::after { animation: none !important; transition: none !important; }
 .no-anim .confetti { display: none; }
+
+/* ランキング表: 順位・点数・時間は折り返さない（スマホで縦に潰れていた） */
+.rank-table .rk, .rank-table .sc, .rank-table .tm { white-space: nowrap; }
+.rank-table .nm { word-break: keep-all; }
+.rank-table td { padding: 6px 6px; }
+@media (max-width: 480px) { .rank-table .tm { display: table-cell; font-size: 0.8rem; } .rank-table td { padding: 5px 4px; font-size: 0.95rem; } .rank-table img { width: 26px; height: 26px; } }

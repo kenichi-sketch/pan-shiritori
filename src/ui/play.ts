@@ -2,7 +2,7 @@ import type { Dictionary } from '../data';
 import { availableWordCount, checkChain, generatePuzzle, hint as findHint, levelConfig } from '../game';
 import { level5Star, recordClear, reportWord, saveProfile, schoolGrade, todayStr, touchPlay } from '../profile';
 import { hashString, randomSeed } from '../rng';
-import { addRecord, bestFor, fmtTime, puzzleScore, rankingFor } from '../ranking';
+import { addRecord, bestFor, fmtTime, fmtTimeShort, puzzleScore, rankingFor } from '../ranking';
 import { sfx, speak } from '../audio';
 import { BREADS } from '../chars';
 import type { Category, Profile, Puzzle, WordInfo } from '../types';
@@ -351,10 +351,10 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
         h('div', null,
           h('div', { class: 'stat' }, '⭐ スタンプ ', h('span', { class: 'num' }, String(profile.progress.stamps))),
           profile.progress.streak > 1 ? h('div', { class: 'stat', style: { marginTop: '6px' } }, '🔥 ', h('span', { class: 'num' }, String(profile.progress.streak)), ' にち れんぞく') : null,
-          ps ? h('div', { class: 'stat', style: { marginTop: '6px' } }, '🏅 ', h('span', { class: 'num' }, `+${ps.total}`), ' てん') : null,
+          ps ? h('div', { class: 'stat', style: { marginTop: '6px' } }, '🏅 ', h('span', { class: 'num' }, `+${ps.total}`), '点') : null,
         ),
       ),
-      ps ? h('div', { class: 'sub center' }, `ことば${words.length}つ ${ps.base}てん ＋ はやさ ${ps.timeBonus}てん ${ps.hintBonus >= 0 ? `＋ ヒントなし ${ps.hintBonus}てん` : `− ヒント${hintCount}かい ${-ps.hintBonus}てん`}（${fmtTime(ms)}）`) : null,
+      ps ? h('div', { class: 'sub center' }, `ことば${words.length}つ ${ps.base}点 ＋ はやさ ${ps.timeBonus}点 ${ps.hintBonus >= 0 ? `＋ ヒントなし ${ps.hintBonus}点` : `− ヒント${hintCount}かい ${-ps.hintBonus}点`}（${fmtTime(ms)}）`) : null,
       list,
       ...notices,
       h('div', { class: 'row', style: { justifyContent: 'center', marginTop: '10px' } },
@@ -392,13 +392,13 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     const ranking = rankingFor(opt.cat, 0, totalCount).slice(0, 10);
     const modalChar = new Character(profile.bread, 150);
     modalChar.mood(isBest ? 'dance' : 'happy', 0);
-    const table = h('table', { style: { width: '100%', background: '#fff', borderRadius: '14px', overflow: 'hidden' } },
-      ...ranking.map((r, i) => h('tr', { style: { background: r.date === entry.date ? '#fff3dc' : '' } },
-        h('td', { style: { padding: '6px 10px', fontWeight: '900', width: '2.5em' } }, `${i + 1}い`),
-        h('td', { style: { padding: '6px' } }, h('img', { src: `${import.meta.env.BASE_URL}chars/${r.bread}.webp`, style: { width: '32px', height: '32px', verticalAlign: 'middle' } })),
-        h('td', { style: { padding: '6px 10px', fontWeight: '700' } }, r.name),
-        h('td', { style: { padding: '6px 10px', textAlign: 'right', fontWeight: '900', color: '#e76f51' } }, `${r.score}てん`),
-        h('td', { style: { padding: '6px 10px', textAlign: 'right', color: '#8a7560', fontSize: '0.85rem' } }, fmtTime(r.ms)),
+    const table = h('table', { class: 'rank-table' },
+      ...ranking.map((r, i) => h('tr', { class: r.date === entry.date ? 'me' : '' },
+        h('td', { class: 'rk' }, `${i + 1}い`),
+        h('td', null, h('img', { src: `${import.meta.env.BASE_URL}chars/${r.bread}.webp`, alt: '' })),
+        h('td', { class: 'nm' }, r.name),
+        h('td', { class: 'sc' }, `${r.score}点`),
+        h('td', { class: 'tm' }, fmtTimeShort(r.ms)),
       )),
     );
     const modal = h('div', { class: 'modal' },
@@ -406,10 +406,10 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
       h('div', { class: 'row', style: { justifyContent: 'center', gap: '16px' } },
         modalChar.el,
         h('div', null,
-          h('div', { class: 'stat' }, '🏅 ', h('span', { class: 'num', style: { fontSize: '2rem' } }, String(scoreTotal)), ' てん'),
+          h('div', { class: 'stat' }, '🏅 ', h('span', { class: 'num', style: { fontSize: '2rem' } }, String(scoreTotal)), '点'),
           h('div', { class: 'stat', style: { marginTop: '6px' } }, '⏱ ', fmtTime(elapsedBefore)),
           h('div', { class: 'stat', style: { marginTop: '6px' } }, `${CATEGORY_LABEL[opt.cat]} レベル1〜5 とおし`),
-          prevBest && !isBest ? h('div', { class: 'sub', style: { marginTop: '6px' } }, `いまの さいこう: ${prevBest.score}てん`) : null,
+          prevBest && !isBest ? h('div', { class: 'sub', style: { marginTop: '6px' } }, `いまの さいこう: ${prevBest.score}点`) : null,
           h('div', { class: 'sub', style: { marginTop: '6px' } }, `このたんまつで ${rank}い`),
         ),
       ),

@@ -1,5 +1,5 @@
 import { breadImage } from '../chars';
-import { bestsFor, fmtTime, rankingFor } from '../ranking';
+import { bestsFor, fmtTime, fmtTimeShort, rankingFor } from '../ranking';
 import type { Category, Profile } from '../types';
 import { CATEGORIES, CATEGORY_LABEL } from '../types';
 import { availableCategories } from '../profile';
@@ -7,9 +7,9 @@ import { sfx } from '../audio';
 import { h } from './dom';
 
 /** 得点一覧（本人の最高点 + この端末のランキング）。ホームの小さなボタンから開く */
-export function openScoresModal(p: Profile): void {
+export function openScoresModal(p: Profile, initialCat?: Category): void {
   const cats = availableCategories(p);
-  let cat: Category = cats[cats.length - 1];
+  let cat: Category = initialCat && cats.includes(initialCat) ? initialCat : cats[cats.length - 1];
   const bests = bestsFor(p.id);
   const bestByCat = new Map(bests.filter((b) => b.level === 0).map((b) => [b.cat, b]));
 
@@ -23,15 +23,15 @@ export function openScoresModal(p: Profile): void {
     const list = rankingFor(cat, 0, 5).slice(0, 10);
     body.replaceChildren(
       h('div', { class: 'stat', style: { justifyContent: 'center', marginBottom: '10px' } },
-        mine ? ['🏅 じぶんの さいこう ', h('span', { class: 'num' }, `${mine.score}`), ' てん ', h('span', { class: 'sub' }, `（${fmtTime(mine.ms)}）`)] : 'まだ きろくが ないよ'),
+        mine ? ['🏅 じぶんの さいこう ', h('span', { class: 'num' }, `${mine.score}`), '点 ', h('span', { class: 'sub' }, `（${fmtTime(mine.ms)}）`)] : 'まだ きろくが ないよ'),
       list.length
         ? h('table', { class: 'rank-table' },
           ...list.map((r, i) => h('tr', { class: r.profileId === p.id ? 'me' : '' },
             h('td', { class: 'rk' }, `${i + 1}い`),
             h('td', null, h('img', { src: breadImage(r.bread), alt: '' })),
             h('td', { class: 'nm' }, r.name),
-            h('td', { class: 'sc' }, `${r.score}てん`),
-            h('td', { class: 'tm' }, fmtTime(r.ms)),
+            h('td', { class: 'sc' }, `${r.score}点`),
+            h('td', { class: 'tm' }, fmtTimeShort(r.ms)),
           )))
         : h('p', { class: 'sub center' }, 'スコアアタックを あそぶと ここに ならぶよ'),
     );

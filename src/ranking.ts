@@ -82,10 +82,16 @@ export function bestsFor(profileId: string): RankEntry[] {
   });
 }
 
+/** 時間の表示。1:19.7 のように分:秒.十分の一（場所を取らない形式。2026-09-15 有澤さん指示） */
 export function fmtTime(ms: number): string {
   const s = Math.floor(ms / 1000);
   const m = Math.floor(s / 60);
   const sec = s % 60;
   const tenth = Math.floor((ms % 1000) / 100);
-  return m > 0 ? `${m}ふん${String(sec).padStart(2, '0')}.${tenth}びょう` : `${sec}.${tenth}びょう`;
+  return `${m}:${String(sec).padStart(2, '0')}.${tenth}`;
+}
+/** 表用の短い形式 1:19 */
+export function fmtTimeShort(ms: number): string {
+  const s = Math.round(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
