@@ -58,7 +58,7 @@ export function mountParent(root: HTMLElement, dict: Dictionary, current: Profil
         h('tr', null, h('th', null, '連続日数'), h('td', null, String(stats.streak)), h('th', null, 'ヒント使用'), h('td', null, String(stats.hintsUsed))),
         h('tr', null, h('th', null, '集めた熟語'), h('td', null, String(Object.keys(stats.collected).length)), h('th', null, 'レベル別クリア'), h('td', null, [1, 2, 3, 4, 5].map((l) => `L${l}:${stats.clears[l] ?? 0}`).join(' '))),
       ),
-      bests.length ? h('div', { style: { marginTop: '8px' } }, h('strong', null, 'スコアアタック最高点: '), bests.map((b) => `${CATEGORY_LABEL_KANJI[b.cat]} ${b.level === 0 ? 'L1〜5通し' : `L${b.level} ${b.count}問`} ${b.score}点`).join(' ／ ')) : null,
+      bests.length ? h('div', { style: { marginTop: '8px' } }, h('strong', null, 'タイムアタック最高点: '), bests.map((b) => `${CATEGORY_LABEL_KANJI[b.cat]} ${b.level === 0 ? 'L1〜5通し' : `L${b.level} ${b.count}問`} ${b.score}点`).join(' ／ ')) : null,
       h('div', { class: 'row', style: { marginTop: '10px' } }, h('span', null, '出題範囲の上限'), capSel),
       toggle('レベル1〜5をすべて開く（簡単すぎる子向け）', () => !!p.unlockAll, (v) => { p.unlockAll = v; saveProfile(p); }),
       toggle('タイルにふりがなを表示', () => p.settings.furigana, (v) => { p.settings.furigana = v; saveProfile(p); }),

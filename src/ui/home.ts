@@ -1,6 +1,6 @@
 import type { Dictionary } from '../data';
 import { BREADS, PANURANAI_URL, breadImage } from '../chars';
-import { CLEARS_TO_UNLOCK, L5_CLEARS_PER_STAR, availableCategories, categoryForGrade, gradeLabel, level5Star, maxUnlockedLevel, nextCategory, saveProfile, schoolGrade, todayStr } from '../profile';
+import { CLEARS_TO_UNLOCK, L5_CLEARS_PER_STAR, availableCategories, categoryForGrade, gradeLabel, level5Star, maxUnlockedLevel, nextCategory, saveProfile, schoolGrade } from '../profile';
 import { bestFor, fmtTime } from '../ranking';
 import { sfx } from '../audio';
 import type { Category, Profile } from '../types';
@@ -32,7 +32,6 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
   const star = level5Star(p);
   const hour = new Date().getHours();
   const greet = hour < 10 ? 'おはよう' : hour < 17 ? 'こんにちは' : 'こんばんは';
-  const dailyDone = p.progress.dailyDone === todayStr();
   const bread = BREADS[p.bread];
 
   const ch = new Character(p.bread, 130);
@@ -87,7 +86,7 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
   }
   renderChips(); renderLevels();
 
-  const scoreBtn = h('button', { class: 'btn blue', onClick: () => { sfx.tap(); act.score(cat, 0, 5); } }, '🏅 スコアアタック（レベル1〜5 とおし）');
+  const scoreBtn = h('button', { class: 'btn blue', onClick: () => { sfx.tap(); act.score(cat, 0, 5); } }, '⏱ タイムアタック（とくてん けいさん）');
   const best = bestFor(p.id, cat, 0, 5);
 
   // パン占いへ（生年月日を POST して結果ページを開く）。新しいタブだと GET に化ける環境があるので同じタブで開く
@@ -125,13 +124,14 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
     h('h3', { style: { margin: '14px 0 0' } }, 'レベルを えらぼう'),
     h('p', { class: 'sub', style: { margin: '0 0 4px' } }, `${CLEARS_TO_UNLOCK}かい クリアすると つぎの レベルが ひらくよ`),
     levelsEl,
-    h('p', { class: 'sub', style: { margin: '14px 0 4px' } }, 'スコアアタックは レベル1から5まで 1もんずつ、じかんを はかって とくてんを きそうよ'),
+    h('p', { class: 'sub', style: { margin: '14px 0 4px' } }, 'タイムアタックは レベル1から5まで 1もんずつ、じかんを はかって とくてんを けいさんするよ'),
     h('div', { class: 'home-actions' },
-      h('button', { class: `btn ${dailyDone ? 'ghost' : 'pink'}`, onClick: () => { sfx.tap(); act.daily(cat, maxLv); } }, dailyDone ? '☀ きょうの1もん ✓' : '☀ きょうの1もん'),
+      // いまの学年・いちばん上のレベルですぐ遊ぶ（旧「きょうの1もん」。2026-09-15 有澤さん指示）
+      h('button', { class: 'btn pink', onClick: () => { sfx.tap(); act.play(cat, maxLv); } }, `▶ すぐはじめる（レベル${maxLv}）`),
       scoreBtn,
       h('button', { class: 'btn green', onClick: () => { sfx.tap(); act.zukan(); } }, '📖 ことばずかん'),
     ),
-    best ? h('p', { class: 'sub center', style: { margin: '6px 0 0' } }, `スコアアタック さいこうてん（${CATEGORY_LABEL[cat]}）: ${best.score}点 ／ ${fmtTime(best.ms)}`) : null,
+    best ? h('p', { class: 'sub center', style: { margin: '6px 0 0' } }, `タイムアタック さいこうてん（${CATEGORY_LABEL[cat]}）: ${best.score}点 ／ ${fmtTime(best.ms)}`) : null,
     h('div', { class: 'home-footer' },
       h('div', { class: 'row' }, uranaiForm, h('button', { class: 'btn ghost small', onClick: () => { sfx.tap(); openShareModal(); } }, '👫 ともだちに おしえる'),
         isStandalone() ? null : h('button', { class: 'btn ghost small', onClick: () => { sfx.tap(); openInstallModal(); } }, '📲 ホームに 追加')),

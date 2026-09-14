@@ -33,7 +33,7 @@ export function openScoresModal(p: Profile, initialCat?: Category): void {
             h('td', { class: 'sc' }, `${r.score}点`),
             h('td', { class: 'tm' }, fmtTimeShort(r.ms)),
           )))
-        : h('p', { class: 'sub center' }, 'スコアアタックを あそぶと ここに ならぶよ'),
+        : h('p', { class: 'sub center' }, 'タイムアタックを あそぶと ここに ならぶよ'),
     );
   }
   render();
@@ -41,7 +41,7 @@ export function openScoresModal(p: Profile, initialCat?: Category): void {
   const overlay = h('div', { class: 'overlay', onClick: (e: Event) => { if (e.target === overlay) overlay.remove(); } },
     h('div', { class: 'modal' },
       h('h2', null, '🏅 とくてん いちらん'),
-      h('p', { class: 'sub center', style: { margin: '0 0 8px' } }, 'スコアアタック（レベル1〜5 とおし）の きろく。この たんまつで あそんだ ひとの ぶん'),
+      h('p', { class: 'sub center', style: { margin: '0 0 8px' } }, 'タイムアタック（レベル1〜5 とおし・とくてん けいさん）の きろく。この たんまつで あそんだ ひとの ぶん'),
       chips,
       h('div', { style: { marginTop: '10px' } }, body),
       h('div', { class: 'center', style: { marginTop: '12px' } }, h('button', { class: 'btn ghost small', onClick: () => overlay.remove() }, 'とじる')),
