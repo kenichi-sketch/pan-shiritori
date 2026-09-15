@@ -95,7 +95,7 @@ export function mountHome(root: HTMLElement, dict: Dictionary, p: Profile, act: 
     h('input', { type: 'hidden', name: 'year', value: by }),
     h('input', { type: 'hidden', name: 'month', value: String(Number(bm)) }),
     h('input', { type: 'hidden', name: 'day', value: String(Number(bd)) }),
-    h('button', { type: 'submit', class: 'btn ghost small' }, '🔮 きょうの うらない（パンうらないの けっかへ）'),
+    h('button', { type: 'submit', class: 'btn ghost small' }, '🔮 きょうのうらないけっか（パン占い）'),
   );
 
   clear(root);
