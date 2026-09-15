@@ -124,15 +124,17 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     if (recentKeys.size > 200) recentKeys.delete(recentKeys.values().next().value as string);
     placed = puzzle.first ? [puzzle.first] : [];
     usedHint = false; hintCount = 0;
-    puzzleStart = performance.now();
+    // タイムアタックの1問目は、最初の1枚を置いた瞬間から計測する（2026-09-15 有澤さん指示）。0 = まだ始まっていない
+    puzzleStart = opt.mode === 'score' && solvedCount === 0 ? 0 : performance.now();
     renderTray();
     renderChain();
     // 「7まい」はマスを見れば分かるので出さない（2026-09-15 有澤さん指摘）。スコアアタックの進み（3 / 5もんめ）だけ出す
     progressBadge.textContent = opt.mode === 'score' ? `${solvedCount + 1} / ${totalCount}もんめ` : '';
     progressBadge.style.display = opt.mode === 'score' ? '' : 'none';
     const n = puzzle.cfg.n;
-    if (puzzle.first) say(`「${puzzle.first}」から はじめて、${n}まい つなげよう！`);
-    else say(`すきな 1まいから はじめて、${n}まい つなげよう！`);
+    const startNote = puzzleStart === 0 ? ' 1まいめを おいたら じかんが すすむよ。' : '';
+    if (puzzle.first) say(`「${puzzle.first}」から はじめて、${n}まい つなげよう！${startNote}`);
+    else say(`すきな 1まいから はじめて、${n}まい つなげよう！${startNote}`);
     character.mood('wave', 1200);
   }
 
@@ -239,6 +241,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
       say(`「${last}${k}」は ことばに ならないみたい。ほかのを ためしてみよう`);
       return;
     }
+    if (puzzleStart === 0) puzzleStart = performance.now();   // 最初の1枚で計測開始
     t.used = true; t.el.classList.add('used');
     placed.push(k);
     sfx.place();
@@ -304,7 +307,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     const chk = checkChain(dict, placed);
     if (!chk.ok) return; // 起こらないはず
     finished = true;
-    const ms = performance.now() - puzzleStart;
+    const ms = puzzleStart ? performance.now() - puzzleStart : 0;
     elapsedBefore += ms;
     const words = wordsInChain();
     sfx.clear();
@@ -435,7 +438,7 @@ export function mountPlay(root: HTMLElement, opt: PlayOptions): () => void {
     stopTimer();
     timerId = window.setInterval(() => {
       if (finished) return;
-      const ms = elapsedBefore + (performance.now() - puzzleStart);
+      const ms = elapsedBefore + (puzzleStart ? performance.now() - puzzleStart : 0);
       timerBadge.textContent = `⏱ ${fmtTime(ms)}`;
     }, 100);
   }
